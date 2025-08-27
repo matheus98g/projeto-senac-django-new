@@ -1,0 +1,104 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Verificar Disponibilidade - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h3 class="card-title mb-0">Verificar Disponibilidade de Livros</h3>
+      </div>
+      <div class="card-body">
+        <form method="get" class="mb-4">
+          <div class="input-group">
+            <input 
+              type="text" 
+              class="form-control" 
+              name="q" 
+              placeholder="Digite o título ou ISBN do livro..."
+              value="{{ request.GET.q }}"
+            >
+            <button class="btn btn-primary" type="submit">Verificar</button>
+          </div>
+        </form>
+
+        {% if request.GET.q %}
+        <div class="alert alert-info">
+          Resultados para: <strong>{{ request.GET.q }}</strong>
+        </div>
+
+        {% if livros %}
+          {% for livro in livros %}
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <div class="col-md-8">
+                  <h5 class="card-title">{{ livro.titulo }}</h5>
+                  <p class="card-text">
+                    <strong>Autor:</strong> {{ livro.autor.nome }}<br>
+                    <strong>Gênero:</strong> {{ livro.get_genero_display }}
+                  </p>
+                </div>
+                <div class="col-md-4 text-end">
+                  <div class="availability-info">
+                    <h6>Disponibilidade:</h6>
+                    {% if livro.quantidade_disponivel > 0 %}
+                      <span class="badge bg-success fs-6">
+                        {{ livro.quantidade_disponivel }} de {{ livro.quantidade }} disponível(is)
+                      </span>
+                      <div class="mt-2">
+                        <a href="{% url 'biblioteca:reservar_livro' livro.pk %}" class="btn btn-success btn-sm">
+                          Reservar Agora
+                        </a>
+                      </div>
+                    {% else %}
+                      <span class="badge bg-danger fs-6">Indisponível</span>
+                      <p class="small text-muted mt-1">
+                        Todos os exemplares estão emprestados
+                      </p>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="alert alert-warning">
+            Nenhum livro encontrado com os termos pesquisados.
+          </div>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Informações sobre disponibilidade -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5>Como Funciona a Disponibilidade</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Status de Disponibilidade:</h6>
+            <ul>
+              <li><span class="badge bg-success me-2">Disponível</span> Há exemplares para empréstimo</li>
+              <li><span class="badge bg-danger me-2">Indisponível</span> Todos os exemplares estão emprestados</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6>Informações Importantes:</h6>
+            <ul>
+              <li>Prazo de empréstimo: 15 dias</li>
+              <li>Possível renovar até 3 vezes</li>
+              <li>Reservas têm validade de 7 dias</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

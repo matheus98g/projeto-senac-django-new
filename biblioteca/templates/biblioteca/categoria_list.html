@@ -1,0 +1,68 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Categorias - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Categorias</h2>
+      {% if user.is_authenticated and user.tipo_usuario == 'admin' %}
+      <a href="{% url 'biblioteca:categoria_create' %}" class="btn btn-primary">
+        Nova Categoria
+      </a>
+      {% endif %}
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="row">
+      {% for categoria in categorias %}
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">{{ categoria.nome }}</h5>
+            <p class="card-text">{{ categoria.descricao|default:"Sem descrição" }}</p>
+            <p class="text-muted small">
+              Criada em: {{ categoria.data_cadastro|date:"d/m/Y" }}
+            </p>
+            
+            {% if user.is_authenticated and user.tipo_usuario == 'admin' %}
+            <div class="d-flex gap-2">
+              <a href="{% url 'biblioteca:categoria_update' categoria.pk %}" class="btn btn-sm btn-outline-primary">
+                Editar
+              </a>
+              <a href="{% url 'biblioteca:categoria_delete' categoria.pk %}" class="btn btn-sm btn-outline-danger">
+                Excluir
+              </a>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="alert alert-info">
+          <h5>Nenhuma categoria encontrada</h5>
+          <p class="mb-0">
+            {% if user.is_authenticated and user.tipo_usuario == 'admin' %}
+              Clique em "Nova Categoria" para criar a primeira categoria.
+            {% else %}
+              Não há categorias cadastradas no momento.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

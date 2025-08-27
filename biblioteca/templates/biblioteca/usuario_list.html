@@ -1,0 +1,193 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Lista de Usuários - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-md-8">
+    <h2>Lista de Usuários</h2>
+  </div>
+  <div class="col-md-4 text-end">
+    <a href="{% url 'biblioteca:admin_dashboard' %}" class="btn btn-outline-secondary">
+      Voltar ao Painel
+    </a>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <div class="col-md-3">
+        <label for="search" class="form-label">Buscar</label>
+        <input type="text" class="form-control" name="search" id="search" 
+               placeholder="Nome ou email" value="{{ request.GET.search }}">
+      </div>
+      <div class="col-md-3">
+        <label for="tipo_usuario" class="form-label">Tipo de Usuário</label>
+        <select class="form-select" name="tipo_usuario" id="tipo_usuario">
+          <option value="">Todos</option>
+          <option value="comum" {% if request.GET.tipo_usuario == 'comum' %}selected{% endif %}>Comum</option>
+          <option value="admin" {% if request.GET.tipo_usuario == 'admin' %}selected{% endif %}>Administrador</option>
+          <option value="funcionario" {% if request.GET.tipo_usuario == 'funcionario' %}selected{% endif %}>Funcionário</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="status" class="form-label">Status</label>
+        <select class="form-select" name="status" id="status">
+          <option value="">Todos</option>
+          <option value="ativo" {% if request.GET.status == 'ativo' %}selected{% endif %}>Ativo</option>
+          <option value="inativo" {% if request.GET.status == 'inativo' %}selected{% endif %}>Inativo</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label for="ordenar" class="form-label">Ordenar por</label>
+        <select class="form-select" name="ordenar" id="ordenar">
+          <option value="nome" {% if request.GET.ordenar == 'nome' %}selected{% endif %}>Nome</option>
+          <option value="data_cadastro" {% if request.GET.ordenar == 'data_cadastro' %}selected{% endif %}>Data de Cadastro</option>
+          <option value="ultimo_acesso" {% if request.GET.ordenar == 'ultimo_acesso' %}selected{% endif %}>Último Acesso</option>
+        </select>
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a href="{% url 'biblioteca:usuario_list' %}" class="btn btn-outline-secondary">Limpar Filtros</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Lista de Usuários -->
+<div class="row">
+  {% if usuarios %}
+    {% for usuario in usuarios %}
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="card-title mb-0">{{ usuario.get_full_name|default:usuario.username }}</h6>
+              {% if usuario.is_active %}
+                <span class="badge bg-success">Ativo</span>
+              {% else %}
+                <span class="badge bg-danger">Inativo</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card-body">
+            <p class="card-text">
+              <strong>Username:</strong> {{ usuario.username }}<br>
+              <strong>Email:</strong> {{ usuario.email|default:"Não informado" }}<br>
+              <strong>Tipo:</strong> {{ usuario.get_tipo_usuario_display|default:"Comum" }}<br>
+              <strong>Cadastro:</strong> {{ usuario.date_joined|date:"d/m/Y" }}<br>
+              {% if usuario.last_login %}
+                <strong>Último acesso:</strong> {{ usuario.last_login|date:"d/m/Y H:i" }}<br>
+              {% endif %}
+            </p>
+            
+            <!-- Estatísticas do Usuário -->
+            <div class="row text-center mt-3">
+              <div class="col-4">
+                <small class="text-muted">Empréstimos</small>
+                <h6 class="text-primary">{{ usuario.emprestimos_count|default:0 }}</h6>
+              </div>
+              <div class="col-4">
+                <small class="text-muted">Reservas</small>
+                <h6 class="text-success">{{ usuario.reservas_count|default:0 }}</h6>
+              </div>
+              <div class="col-4">
+                <small class="text-muted">Pendências</small>
+                <h6 class="text-warning">{{ usuario.pendencias_count|default:0 }}</h6>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer">
+            <div class="d-grid gap-2">
+              <a href="{% url 'biblioteca:usuario_detail' usuario.pk %}" class="btn btn-outline-primary btn-sm">
+                Ver Detalhes
+              </a>
+              
+              <div class="btn-group" role="group">
+                <a href="{% url 'biblioteca:usuario_update' usuario.pk %}" class="btn btn-warning btn-sm">
+                  Editar
+                </a>
+                {% if usuario != request.user %}
+                  <a href="{% url 'biblioteca:usuario_delete' usuario.pk %}" class="btn btn-danger btn-sm">
+                    Excluir
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <h4>Nenhum usuário encontrado</h4>
+        <p>Não há usuários que correspondam aos critérios de busca.</p>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Resumo Estatístico -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Resumo Estatístico</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-3">
+            <h4 class="text-primary">{{ total_usuarios|default:0 }}</h4>
+            <p class="mb-0">Total de Usuários</p>
+          </div>
+          <div class="col-md-3">
+            <h4 class="text-success">{{ usuarios_ativos|default:0 }}</h4>
+            <p class="mb-0">Usuários Ativos</p>
+          </div>
+          <div class="col-md-3">
+            <h4 class="text-warning">{{ usuarios_admin|default:0 }}</h4>
+            <p class="mb-0">Administradores</p>
+          </div>
+          <div class="col-md-3">
+            <h4 class="text-info">{{ novos_usuarios_mes|default:0 }}</h4>
+            <p class="mb-0">Novos este Mês</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Paginação -->
+{% if is_paginated %}
+  <nav aria-label="Navegação de páginas" class="mt-4">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">Primeira</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">Anterior</a>
+        </li>
+      {% endif %}
+
+      <li class="page-item active">
+        <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      </li>
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">Próxima</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">Última</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endif %}
+{% endblock %}

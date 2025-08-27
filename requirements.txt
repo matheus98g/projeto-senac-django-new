@@ -1,0 +1,30 @@
+# Sistema de Biblioteca Senac - Requirements
+# Python 3.9+ required
+
+# Core Django Framework
+Django>=4.2.0,<5.0.0
+
+# Database
+# SQLite is included with Django by default
+# Uncomment the line below if you plan to use PostgreSQL in production
+# psycopg2-binary>=2.9.0
+
+# Forms & UI
+django-crispy-forms>=2.0.0
+crispy-bootstrap5>=0.7.0
+django-widget-tweaks>=1.4.0
+
+# Development & Debugging (remove in production)
+django-debug-toolbar>=4.1.0
+
+# Testing
+pytest>=7.4.0
+pytest-django>=4.5.0
+
+# Utilities
+python-dateutil>=2.8.0
+pytz>=2023.3
+
+# Production Dependencies (uncomment when deploying)
+# gunicorn>=21.0.0
+# whitenoise>=6.5.0

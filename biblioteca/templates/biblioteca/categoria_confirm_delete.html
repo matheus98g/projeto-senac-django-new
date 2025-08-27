@@ -1,0 +1,40 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Exclusão - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-danger text-white">
+        <h3 class="card-title mb-0">Confirmar Exclusão</h3>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-warning">
+          <h5>Atenção!</h5>
+          <p>Você está prestes a excluir a categoria:</p>
+          <strong>{{ object.nome }}</strong>
+          {% if object.descricao %}
+            <p class="mt-2">{{ object.descricao }}</p>
+          {% endif %}
+        </div>
+
+        <p>Esta ação não pode ser desfeita. Tem certeza de que deseja continuar?</p>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-danger">
+              Sim, Excluir
+            </button>
+            <a href="{% url 'biblioteca:categoria_list' %}" class="btn btn-secondary">
+              Cancelar
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

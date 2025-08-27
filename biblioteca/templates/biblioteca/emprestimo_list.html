@@ -1,0 +1,87 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Empréstimos - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Empréstimos</h2>
+      {% if user.is_authenticated and user.tipo_usuario == 'admin' %}
+      <a href="{% url 'biblioteca:emprestimo_create' %}" class="btn btn-primary">
+        Novo Empréstimo
+      </a>
+      {% endif %}
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Livro</th>
+                <th>Data Empréstimo</th>
+                <th>Data Prevista</th>
+                <th>Data Devolução</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for emprestimo in emprestimos %}
+              <tr>
+                <td>{{ emprestimo.usuario.get_full_name|default:emprestimo.usuario.username }}</td>
+                <td>{{ emprestimo.livro.titulo }}</td>
+                <td>{{ emprestimo.data_emprestimo|date:"d/m/Y" }}</td>
+                <td>{{ emprestimo.data_devolucao_prevista|date:"d/m/Y" }}</td>
+                <td>
+                  {% if emprestimo.data_devolucao %}
+                    {{ emprestimo.data_devolucao|date:"d/m/Y" }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="badge bg-{% if emprestimo.status == 'ativo' %}primary{% elif emprestimo.status == 'devolvido' %}success{% else %}danger{% endif %}">
+                    {{ emprestimo.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  <a href="{% url 'biblioteca:emprestimo_detail' emprestimo.pk %}" class="btn btn-sm btn-outline-primary">
+                    Ver
+                  </a>
+                  {% if emprestimo.status == 'ativo' %}
+                    <a href="{% url 'biblioteca:devolver_livro' emprestimo.pk %}" class="btn btn-sm btn-success">
+                      Devolver
+                    </a>
+                    <a href="{% url 'biblioteca:renovar_emprestimo' emprestimo.pk %}" class="btn btn-sm btn-warning">
+                      Renovar
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="7" class="text-center">Nenhum empréstimo encontrado.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

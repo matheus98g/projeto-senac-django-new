@@ -1,0 +1,184 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4">Dashboard</h2>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card bg-primary text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h5 class="card-title">Total de Livros</h5>
+                <h2 class="card-text">{{ stats.total_livros|default:0 }}</h2>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-book fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-success text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h5 class="card-title">Usuários Ativos</h5>
+                <h2 class="card-text">{{ stats.total_usuarios|default:0 }}</h2>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-users fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-warning text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h5 class="card-title">Empréstimos Ativos</h5>
+                <h2 class="card-text">{{ stats.emprestimos_ativos|default:0 }}</h2>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-book-reader fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card bg-danger text-white">
+          <div class="card-body">
+            <div class="d-flex justify-content-between">
+              <div>
+                <h5 class="card-title">Empréstimos em Atraso</h5>
+                <h2 class="card-text">{{ stats.emprestimos_atrasados|default:0 }}</h2>
+              </div>
+              <div class="align-self-center">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gráficos e Relatórios -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h5>Empréstimos por Mês</h5>
+          </div>
+          <div class="card-body">
+            <canvas id="emprestimosChart" width="400" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-header">
+            <h5>Livros Mais Emprestados</h5>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Livro</th>
+                    <th>Empréstimos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for livro in livros_populares %}
+                  <tr>
+                    <td>{{ livro.titulo }}</td>
+                    <td>{{ livro.total_emprestimos }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="2" class="text-center">Nenhum dado disponível</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <h5>Ações Rápidas</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3">
+                <a href="{% url 'biblioteca:emprestimo_create' %}" class="btn btn-primary btn-lg w-100 mb-2">
+                  <i class="fas fa-plus me-2"></i>Novo Empréstimo
+                </a>
+              </div>
+              <div class="col-md-3">
+                <a href="{% url 'biblioteca:livro_create' %}" class="btn btn-success btn-lg w-100 mb-2">
+                  <i class="fas fa-book me-2"></i>Cadastrar Livro
+                </a>
+              </div>
+              <div class="col-md-3">
+                <a href="{% url 'biblioteca:relatorios' %}" class="btn btn-info btn-lg w-100 mb-2">
+                  <i class="fas fa-chart-bar me-2"></i>Relatórios
+                </a>
+              </div>
+              <div class="col-md-3">
+                <a href="{% url 'biblioteca:usuario_list' %}" class="btn btn-warning btn-lg w-100 mb-2">
+                  <i class="fas fa-users me-2"></i>Gerenciar Usuários
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Gráfico de empréstimos por mês (dados fictícios - implementar com dados reais)
+const ctx = document.getElementById('emprestimosChart').getContext('2d');
+const emprestimosChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+        datasets: [{
+            label: 'Empréstimos',
+            data: [12, 19, 15, 25, 22, 30],
+            borderColor: 'rgb(75, 192, 192)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

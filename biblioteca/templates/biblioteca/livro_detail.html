@@ -1,0 +1,67 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}{{ livro.titulo }} - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">{{ livro.titulo }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Autor:</strong> {{ livro.autor.nome }}</p>
+            <p><strong>Gênero:</strong> {{ livro.get_genero_display }}</p>
+            <p><strong>Quantidade Total:</strong> {{ livro.quantidade }}</p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Disponível:</strong> {{ livro.quantidade_disponivel }}</p>
+            <p><strong>Data de Cadastro:</strong> {{ livro.data_cadastro|date:"d/m/Y H:i" }}</p>
+            <p>
+              <strong>Status:</strong>
+              {% if livro.is_available %}
+                <span class="badge bg-success">Disponível</span>
+              {% else %}
+                <span class="badge bg-danger">Indisponível</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Ações</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          {% if user.is_authenticated and livro.is_available %}
+            <a href="{% url 'biblioteca:reservar_livro' livro.pk %}" class="btn btn-success">
+              Reservar Livro
+            </a>
+          {% endif %}
+          
+          {% if user.is_authenticated and user.is_admin %}
+            <a href="{% url 'biblioteca:livro_update' livro.pk %}" class="btn btn-warning">
+              Editar
+            </a>
+            <a href="{% url 'biblioteca:livro_delete' livro.pk %}" class="btn btn-danger">
+              Excluir
+            </a>
+          {% endif %}
+          
+          <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-outline-primary">
+            Voltar à Lista
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

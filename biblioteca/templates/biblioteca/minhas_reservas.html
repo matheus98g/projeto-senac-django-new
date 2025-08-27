@@ -1,0 +1,174 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Minhas Reservas - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-md-8">
+    <h2>Minhas Reservas</h2>
+  </div>
+  <div class="col-md-4 text-end">
+    <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-primary">
+      Fazer Nova Reserva
+    </a>
+  </div>
+</div>
+
+<!-- Abas -->
+<ul class="nav nav-tabs" id="reservaTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" id="ativas-tab" data-bs-toggle="tab" data-bs-target="#ativas" type="button" role="tab">
+      Reservas Ativas
+      {% if reservas_ativas.count > 0 %}
+        <span class="badge bg-success ms-1">{{ reservas_ativas.count }}</span>
+      {% endif %}
+    </button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link" id="historico-tab" data-bs-toggle="tab" data-bs-target="#historico" type="button" role="tab">
+      Histórico
+      {% if reservas_historico.count > 0 %}
+        <span class="badge bg-secondary ms-1">{{ reservas_historico.count }}</span>
+      {% endif %}
+    </button>
+  </li>
+</ul>
+
+<div class="tab-content" id="reservaTabContent">
+  <!-- Reservas Ativas -->
+  <div class="tab-pane fade show active" id="ativas" role="tabpanel">
+    <div class="row mt-4">
+      {% if reservas_ativas %}
+        {% for reserva in reservas_ativas %}
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+              <div class="card-header bg-success text-white">
+                <h6 class="card-title mb-0">Reserva Ativa</h6>
+              </div>
+              <div class="card-body">
+                <h6 class="card-title">{{ reserva.livro.titulo }}</h6>
+                <p class="card-text">
+                  <small class="text-muted">por {{ reserva.livro.autor.nome }}</small><br>
+                  <strong>Data da Reserva:</strong> {{ reserva.data_reserva|date:"d/m/Y H:i" }}<br>
+                  <strong>Expira em:</strong> {{ reserva.data_expiracao|date:"d/m/Y H:i" }}<br>
+                  
+                  {% if reserva.is_expiring_soon %}
+                    <div class="alert alert-warning mt-2 mb-0">
+                      <small><i class="fas fa-exclamation-triangle"></i> Expira em breve!</small>
+                    </div>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="card-footer">
+                <div class="d-grid gap-2">
+                  <a href="{% url 'biblioteca:livro_detail' reserva.livro.pk %}" class="btn btn-outline-primary btn-sm">
+                    Ver Livro
+                  </a>
+                  <a href="{% url 'biblioteca:cancelar_reserva' reserva.pk %}" class="btn btn-outline-danger btn-sm">
+                    Cancelar Reserva
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12">
+          <div class="alert alert-info text-center">
+            <h4>Você não possui reservas ativas</h4>
+            <p>Explore nossa coleção e faça suas reservas!</p>
+            <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-primary">
+              Ver Livros Disponíveis
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Histórico -->
+  <div class="tab-pane fade" id="historico" role="tabpanel">
+    <div class="row mt-4">
+      {% if reservas_historico %}
+        {% for reserva in reservas_historico %}
+          <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+              <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h6 class="card-title mb-0">Reserva #{{ reserva.id }}</h6>
+                  {% if reserva.status == 'expirada' %}
+                    <span class="badge bg-warning">Expirada</span>
+                  {% elif reserva.status == 'cancelada' %}
+                    <span class="badge bg-danger">Cancelada</span>
+                  {% elif reserva.status == 'finalizada' %}
+                    <span class="badge bg-success">Finalizada</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ reserva.get_status_display }}</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="card-body">
+                <h6 class="card-title">{{ reserva.livro.titulo }}</h6>
+                <p class="card-text">
+                  <small class="text-muted">por {{ reserva.livro.autor.nome }}</small><br>
+                  <strong>Data da Reserva:</strong> {{ reserva.data_reserva|date:"d/m/Y H:i" }}<br>
+                  <strong>Data de Expiração:</strong> {{ reserva.data_expiracao|date:"d/m/Y H:i" }}<br>
+                  {% if reserva.data_cancelamento %}
+                    <strong>Cancelada em:</strong> {{ reserva.data_cancelamento|date:"d/m/Y H:i" }}<br>
+                  {% endif %}
+                </p>
+              </div>
+              <div class="card-footer">
+                <div class="d-grid">
+                  <a href="{% url 'biblioteca:livro_detail' reserva.livro.pk %}" class="btn btn-outline-primary btn-sm">
+                    Ver Livro
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12">
+          <div class="alert alert-info text-center">
+            <h4>Sem histórico de reservas</h4>
+            <p>Você ainda não fez nenhuma reserva no sistema.</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Resumo -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Resumo das Minhas Reservas</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-3">
+            <h4 class="text-success">{{ reservas_ativas.count }}</h4>
+            <p class="mb-0">Reservas Ativas</p>
+          </div>
+          <div class="col-md-3">
+            <h4 class="text-warning">{{ reservas_expiradas.count|default:0 }}</h4>
+            <p class="mb-0">Reservas Expiradas</p>
+          </div>
+          <div class="col-md-3">
+            <h4 class="text-danger">{{ reservas_canceladas.count|default:0 }}</h4>
+            <p class="mb-0">Reservas Canceladas</p>
+          </div>
+          <div class="col-md-3">
+            <h4 class="text-primary">{{ total_reservas|default:0 }}</h4>
+            <p class="mb-0">Total de Reservas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

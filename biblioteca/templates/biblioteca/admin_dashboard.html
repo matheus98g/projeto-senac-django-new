@@ -1,0 +1,253 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Painel Administrativo - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-12">
+    <h2><i class="fas fa-tachometer-alt"></i> Painel Administrativo</h2>
+    <p class="text-muted">Visão geral do sistema e ações administrativas</p>
+  </div>
+</div>
+
+<!-- Estatísticas Gerais -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title">Total de Livros</h5>
+            <h2 class="card-text">{{ total_livros|default:0 }}</h2>
+          </div>
+          <div>
+            <i class="fas fa-book fa-2x"></i>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="{% url 'biblioteca:livro_list' %}" class="text-white text-decoration-none">
+          Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title">Total de Usuários</h5>
+            <h2 class="card-text">{{ total_usuarios|default:0 }}</h2>
+          </div>
+          <div>
+            <i class="fas fa-users fa-2x"></i>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="{% url 'biblioteca:usuario_list' %}" class="text-white text-decoration-none">
+          Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title">Empréstimos Ativos</h5>
+            <h2 class="card-text">{{ emprestimos_ativos|default:0 }}</h2>
+          </div>
+          <div>
+            <i class="fas fa-handshake fa-2x"></i>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="{% url 'biblioteca:emprestimo_list' %}" class="text-white text-decoration-none">
+          Ver todos <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card bg-info text-white">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h5 class="card-title">Reservas Ativas</h5>
+            <h2 class="card-text">{{ reservas_ativas|default:0 }}</h2>
+          </div>
+          <div>
+            <i class="fas fa-bookmark fa-2x"></i>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <a href="{% url 'biblioteca:reserva_list' %}" class="text-white text-decoration-none">
+          Ver todas <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row mb-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-dark text-white">
+        <h5 class="card-title mb-0"><i class="fas fa-bolt"></i> Ações Rápidas</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <h6>Gerenciar Livros</h6>
+            <div class="d-grid gap-2">
+              <a href="{% url 'biblioteca:livro_create' %}" class="btn btn-outline-primary">
+                <i class="fas fa-plus"></i> Adicionar Livro
+              </a>
+              <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> Lista de Livros
+              </a>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <h6>Gerenciar Autores</h6>
+            <div class="d-grid gap-2">
+              <a href="{% url 'biblioteca:autor_create' %}" class="btn btn-outline-success">
+                <i class="fas fa-plus"></i> Adicionar Autor
+              </a>
+              <a href="{% url 'biblioteca:autor_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-list"></i> Lista de Autores
+              </a>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <h6>Gerenciar Usuários</h6>
+            <div class="d-grid gap-2">
+              <a href="{% url 'biblioteca:usuario_list' %}" class="btn btn-outline-info">
+                <i class="fas fa-users"></i> Lista de Usuários
+              </a>
+              <a href="{% url 'biblioteca:emprestimo_create' %}" class="btn btn-outline-warning">
+                <i class="fas fa-handshake"></i> Novo Empréstimo
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alertas e Notificações -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="card-title mb-0"><i class="fas fa-exclamation-triangle"></i> Alertas</h5>
+      </div>
+      <div class="card-body">
+        {% if emprestimos_vencidos %}
+          <div class="alert alert-danger">
+            <strong>{{ emprestimos_vencidos.count }} empréstimo{{ emprestimos_vencidos.count|pluralize:",s" }} vencido{{ emprestimos_vencidos.count|pluralize:",s" }}!</strong>
+            <a href="{% url 'biblioteca:emprestimo_list' %}?status=vencido" class="alert-link">Ver detalhes</a>
+          </div>
+        {% endif %}
+        
+        {% if reservas_expirando %}
+          <div class="alert alert-warning">
+            <strong>{{ reservas_expirando.count }} reserva{{ reservas_expirando.count|pluralize:",s" }} expirando em breve!</strong>
+            <a href="{% url 'biblioteca:reserva_list' %}?expirando=true" class="alert-link">Ver detalhes</a>
+          </div>
+        {% endif %}
+        
+        {% if livros_sem_estoque %}
+          <div class="alert alert-info">
+            <strong>{{ livros_sem_estoque.count }} livro{{ livros_sem_estoque.count|pluralize:",s" }} sem estoque!</strong>
+            <a href="{% url 'biblioteca:livro_list' %}?disponivel=false" class="alert-link">Ver detalhes</a>
+          </div>
+        {% endif %}
+        
+        {% if not emprestimos_vencidos and not reservas_expirando and not livros_sem_estoque %}
+          <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> Nenhum alerta no momento. Sistema funcionando normalmente!
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0"><i class="fas fa-chart-line"></i> Atividade Recente</h5>
+      </div>
+      <div class="card-body">
+        {% if atividades_recentes %}
+          <ul class="list-unstyled">
+            {% for atividade in atividades_recentes %}
+              <li class="mb-2">
+                <small class="text-muted">{{ atividade.data|date:"d/m H:i" }}</small><br>
+                {{ atividade.descricao }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">Nenhuma atividade recente registrada.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Relatórios -->
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-secondary text-white">
+        <h5 class="card-title mb-0"><i class="fas fa-chart-bar"></i> Relatórios e Análises</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="text-center">
+              <a href="{% url 'biblioteca:relatorios' %}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-file-alt fa-2x d-block mb-2"></i>
+                Relatórios Gerais
+              </a>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="text-center">
+              <a href="{% url 'biblioteca:dashboard' %}" class="btn btn-outline-success btn-lg">
+                <i class="fas fa-chart-pie fa-2x d-block mb-2"></i>
+                Dashboard Analytics
+              </a>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="text-center">
+              <a href="{% url 'biblioteca:categoria_list' %}" class="btn btn-outline-info btn-lg">
+                <i class="fas fa-tags fa-2x d-block mb-2"></i>
+                Gerenciar Categorias
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

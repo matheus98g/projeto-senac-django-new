@@ -1,0 +1,16 @@
+{% extends 'biblioteca/base.html' %}
+{% block title %}Cancelar Reserva{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="alert alert-warning">
+    <h4>Cancelar Reserva</h4>
+    <p>Tem certeza que deseja cancelar esta reserva?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Confirmar Cancelamento</button>
+      <a href="{% url 'biblioteca:minhas_reservas' %}" class="btn btn-secondary">Voltar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

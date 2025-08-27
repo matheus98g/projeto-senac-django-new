@@ -1,0 +1,252 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}
+  {% if form.instance.pk %}Editar{% else %}Adicionar{% endif %} Usuário - Sistema de Biblioteca SENAC
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">
+          {% if form.instance.pk %}Editar{% else %}Adicionar{% endif %} Usuário
+        </h3>
+      </div>
+      
+      <div class="card-body">
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <p class="mb-1">{{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="row">
+            <!-- Informações de Login -->
+            <div class="col-md-6">
+              <h5 class="mb-3">Informações de Login</h5>
+              
+              <div class="mb-3">
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                  Nome de Usuário <span class="text-danger">*</span>
+                </label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                  <div class="text-danger small">
+                    {% for error in form.username.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ form.email.id_for_label }}" class="form-label">
+                  Email <span class="text-danger">*</span>
+                </label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                  <div class="text-danger small">
+                    {% for error in form.email.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if not form.instance.pk %}
+                <div class="mb-3">
+                  <label for="{{ form.password1.id_for_label }}" class="form-label">
+                    Senha <span class="text-danger">*</span>
+                  </label>
+                  {{ form.password1 }}
+                  {% if form.password1.errors %}
+                    <div class="text-danger small">
+                      {% for error in form.password1.errors %}
+                        {{ error }}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="mb-3">
+                  <label for="{{ form.password2.id_for_label }}" class="form-label">
+                    Confirmar Senha <span class="text-danger">*</span>
+                  </label>
+                  {{ form.password2 }}
+                  {% if form.password2.errors %}
+                    <div class="text-danger small">
+                      {% for error in form.password2.errors %}
+                        {{ error }}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+
+            <!-- Informações Pessoais -->
+            <div class="col-md-6">
+              <h5 class="mb-3">Informações Pessoais</h5>
+              
+              <div class="mb-3">
+                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                  Nome
+                </label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                  <div class="text-danger small">
+                    {% for error in form.first_name.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                  Sobrenome
+                </label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                  <div class="text-danger small">
+                    {% for error in form.last_name.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <label for="{{ form.tipo_usuario.id_for_label }}" class="form-label">
+                  Tipo de Usuário
+                </label>
+                {{ form.tipo_usuario }}
+                {% if form.tipo_usuario.errors %}
+                  <div class="text-danger small">
+                    {% for error in form.tipo_usuario.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+
+              <div class="mb-3">
+                <div class="form-check">
+                  {{ form.is_active }}
+                  <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                    Usuário Ativo
+                  </label>
+                </div>
+                {% if form.is_active.errors %}
+                  <div class="text-danger small">
+                    {% for error in form.is_active.errors %}
+                      {{ error }}
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+
+              {% if user.is_superuser %}
+                <div class="mb-3">
+                  <div class="form-check">
+                    {{ form.is_staff }}
+                    <label class="form-check-label" for="{{ form.is_staff.id_for_label }}">
+                      Acesso ao Admin
+                    </label>
+                  </div>
+                  {% if form.is_staff.errors %}
+                    <div class="text-danger small">
+                      {% for error in form.is_staff.errors %}
+                        {{ error }}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+
+                <div class="mb-3">
+                  <div class="form-check">
+                    {{ form.is_superuser }}
+                    <label class="form-check-label" for="{{ form.is_superuser.id_for_label }}">
+                      Super Usuário
+                    </label>
+                  </div>
+                  {% if form.is_superuser.errors %}
+                    <div class="text-danger small">
+                      {% for error in form.is_superuser.errors %}
+                        {{ error }}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Informações Adicionais -->
+          {% if form.instance.pk %}
+            <hr>
+            <div class="row">
+              <div class="col-md-6">
+                <h6>Informações do Sistema</h6>
+                <p><strong>Data de cadastro:</strong> {{ form.instance.date_joined|date:"d/m/Y H:i" }}</p>
+                <p><strong>Último acesso:</strong> {{ form.instance.last_login|date:"d/m/Y H:i"|default:"Nunca acessou" }}</p>
+              </div>
+              <div class="col-md-6">
+                <h6>Ações de Senha</h6>
+                <div class="d-grid gap-2">
+                  <button type="button" class="btn btn-outline-warning btn-sm" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">
+                    Redefinir Senha
+                  </button>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+            <a href="{% if form.instance.pk %}{% url 'biblioteca:usuario_detail' form.instance.pk %}{% else %}{% url 'biblioteca:usuario_list' %}{% endif %}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              {% if form.instance.pk %}Atualizar{% else %}Adicionar{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Reset de Senha -->
+{% if form.instance.pk %}
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Redefinir Senha</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja redefinir a senha deste usuário?</p>
+        <p><strong>Usuário:</strong> {{ form.instance.get_full_name|default:form.instance.username }}</p>
+        <div class="alert alert-warning">
+          <small>O usuário receberá um email com instruções para criar uma nova senha.</small>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <a href="#" class="btn btn-warning">Redefinir Senha</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

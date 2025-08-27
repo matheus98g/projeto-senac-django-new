@@ -1,0 +1,139 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Lista de Reservas - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-md-8">
+    <h2>Lista de Reservas</h2>
+  </div>
+  <div class="col-md-4 text-end">
+    {% if user.is_authenticated %}
+      <a href="{% url 'biblioteca:minhas_reservas' %}" class="btn btn-outline-primary">
+        Minhas Reservas
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <div class="col-md-4">
+        <label for="status" class="form-label">Status</label>
+        <select class="form-select" name="status" id="status">
+          <option value="">Todos</option>
+          <option value="ativa" {% if request.GET.status == 'ativa' %}selected{% endif %}>Ativa</option>
+          <option value="expirada" {% if request.GET.status == 'expirada' %}selected{% endif %}>Expirada</option>
+          <option value="cancelada" {% if request.GET.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="usuario" class="form-label">Usuário</label>
+        <input type="text" class="form-control" name="usuario" id="usuario" 
+               placeholder="Nome do usuário" value="{{ request.GET.usuario }}">
+      </div>
+      <div class="col-md-4">
+        <label for="livro" class="form-label">Livro</label>
+        <input type="text" class="form-control" name="livro" id="livro" 
+               placeholder="Título do livro" value="{{ request.GET.livro }}">
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Filtrar</button>
+        <a href="{% url 'biblioteca:reserva_list' %}" class="btn btn-outline-secondary">Limpar Filtros</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Lista de Reservas -->
+<div class="row">
+  {% if reservas %}
+    {% for reserva in reservas %}
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h6 class="card-title mb-0">Reserva #{{ reserva.id }}</h6>
+              {% if reserva.status == 'ativa' %}
+                <span class="badge bg-success">Ativa</span>
+              {% elif reserva.status == 'expirada' %}
+                <span class="badge bg-warning">Expirada</span>
+              {% elif reserva.status == 'cancelada' %}
+                <span class="badge bg-danger">Cancelada</span>
+              {% else %}
+                <span class="badge bg-secondary">{{ reserva.get_status_display }}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="card-body">
+            <h6 class="card-title">{{ reserva.livro.titulo }}</h6>
+            <p class="card-text">
+              <small class="text-muted">por {{ reserva.livro.autor.nome }}</small><br>
+              <strong>Usuário:</strong> {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}<br>
+              <strong>Data da Reserva:</strong> {{ reserva.data_reserva|date:"d/m/Y H:i" }}<br>
+              <strong>Expira em:</strong> {{ reserva.data_expiracao|date:"d/m/Y H:i" }}
+            </p>
+          </div>
+          <div class="card-footer">
+            <div class="d-grid gap-2">
+              <a href="{% url 'biblioteca:livro_detail' reserva.livro.pk %}" class="btn btn-outline-primary btn-sm">
+                Ver Livro
+              </a>
+              
+              {% if user.is_authenticated and user.is_admin %}
+                {% if reserva.status == 'ativa' %}
+                  <a href="{% url 'biblioteca:cancelar_reserva' reserva.pk %}" class="btn btn-outline-danger btn-sm">
+                    Cancelar Reserva
+                  </a>
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <h4>Nenhuma reserva encontrada</h4>
+        <p>Não há reservas que correspondam aos critérios de busca.</p>
+        <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-primary">
+          Ver Livros Disponíveis
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Paginação -->
+{% if is_paginated %}
+  <nav aria-label="Navegação de páginas">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.livro %}&livro={{ request.GET.livro }}{% endif %}">Primeira</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.livro %}&livro={{ request.GET.livro }}{% endif %}">Anterior</a>
+        </li>
+      {% endif %}
+
+      <li class="page-item active">
+        <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      </li>
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.livro %}&livro={{ request.GET.livro }}{% endif %}">Próxima</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.usuario %}&usuario={{ request.GET.usuario }}{% endif %}{% if request.GET.livro %}&livro={{ request.GET.livro }}{% endif %}">Última</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endif %}
+{% endblock %}

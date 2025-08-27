@@ -1,0 +1,91 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Expirar Reservas - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h3 class="card-title mb-0">Expirar Reservas Vencidas</h3>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info">
+          <h5>Processo de Expiração de Reservas</h5>
+          <p>
+            Esta ferramenta permite marcar como expiradas todas as reservas que ultrapassaram 
+            o prazo de validade (7 dias). Reservas expiradas liberam automaticamente os livros 
+            para outros usuários.
+          </p>
+        </div>
+
+        {% if reservas_expiradas %}
+        <div class="alert alert-warning">
+          <h6>Reservas encontradas para expiração:</h6>
+          <ul>
+            {% for reserva in reservas_expiradas %}
+            <li>
+              <strong>{{ reserva.livro.titulo }}</strong> - 
+              {{ reserva.usuario.get_full_name|default:reserva.usuario.username }} 
+              (Reservado em {{ reserva.data_reserva|date:"d/m/Y" }})
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">
+              Expirar {{ reservas_expiradas|length }} Reserva(s)
+            </button>
+            <a href="{% url 'biblioteca:reserva_list' %}" class="btn btn-secondary">
+              Cancelar
+            </a>
+          </div>
+        </form>
+        {% else %}
+        <div class="alert alert-success">
+          <h6>Nenhuma reserva vencida encontrada</h6>
+          <p class="mb-0">
+            Todas as reservas ativas estão dentro do prazo de validade.
+          </p>
+        </div>
+        
+        <a href="{% url 'biblioteca:reserva_list' %}" class="btn btn-primary">
+          Ver Todas as Reservas
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Informações sobre o processo -->
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5>Informações sobre Expiração de Reservas</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Quando uma reserva expira?</h6>
+            <ul>
+              <li>Após 7 dias da data de criação</li>
+              <li>Se o usuário não retirou o livro</li>
+              <li>Automaticamente pelo sistema</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6>O que acontece após expiração?</h6>
+            <ul>
+              <li>O livro fica disponível novamente</li>
+              <li>O usuário é notificado por email</li>
+              <li>A reserva fica marcada como "expirada"</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

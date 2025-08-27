@@ -1,0 +1,113 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Exclusão - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-danger text-white">
+        <h3 class="card-title mb-0">Confirmar Exclusão de Usuário</h3>
+      </div>
+      
+      <div class="card-body">
+        <h5>Tem certeza que deseja excluir o usuário:</h5>
+        <p class="lead">"{{ object.get_full_name|default:object.username }}"?</p>
+        
+        <!-- Informações do Usuário -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <p class="mb-1"><strong>Username:</strong> {{ object.username }}</p>
+            <p class="mb-1"><strong>Email:</strong> {{ object.email|default:"Não informado" }}</p>
+            <p class="mb-1"><strong>Tipo:</strong> {{ object.get_tipo_usuario_display|default:"Comum" }}</p>
+            <p class="mb-0"><strong>Cadastrado em:</strong> {{ object.date_joined|date:"d/m/Y H:i" }}</p>
+          </div>
+        </div>
+        
+        <!-- Verificação de Dados Relacionados -->
+        {% if object.emprestimos.exists or object.reservas.exists %}
+          <div class="alert alert-warning">
+            <h6><strong>Atenção!</strong> Este usuário possui dados relacionados:</h6>
+            <ul class="mb-0">
+              {% if object.emprestimos.exists %}
+                <li><strong>{{ object.emprestimos.count }} empréstimo{{ object.emprestimos.count|pluralize }}</strong></li>
+              {% endif %}
+              {% if object.reservas.exists %}
+                <li><strong>{{ object.reservas.count }} reserva{{ object.reservas.count|pluralize }}</strong></li>
+              {% endif %}
+            </ul>
+          </div>
+          
+          <!-- Verificação de Pendências -->
+          {% if object.emprestimos_ativos %}
+            <div class="alert alert-danger">
+              <h6><strong>Impedimento!</strong></h6>
+              <p>Este usuário possui <strong>{{ object.emprestimos_ativos }} empréstimo{{ object.emprestimos_ativos|pluralize }} ativo{{ object.emprestimos_ativos|pluralize }}</strong>.</p>
+              <p class="mb-0">Não é possível excluir o usuário até que todos os empréstimos sejam finalizados.</p>
+            </div>
+          {% endif %}
+          
+          {% if object.reservas_ativas and not object.emprestimos_ativos %}
+            <div class="alert alert-info">
+              <p><strong>{{ object.reservas_ativas }} reserva{{ object.reservas_ativas|pluralize }} ativa{{ object.reservas_ativas|pluralize }}</strong> será{{ object.reservas_ativas|pluralize:"á,ão" }} automaticamente cancelada{{ object.reservas_ativas|pluralize }}.</p>
+            </div>
+          {% endif %}
+        {% endif %}
+        
+        {% if not object.emprestimos_ativos %}
+          <div class="alert alert-danger">
+            <h6><strong>Atenção:</strong></h6>
+            <ul class="mb-0">
+              <li>Esta ação <strong>não pode ser desfeita</strong></li>
+              <li>Todos os dados relacionados serão mantidos para fins de histórico</li>
+              <li>O usuário não poderá mais acessar o sistema</li>
+            </ul>
+          </div>
+
+          <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+              <label for="motivo_exclusao" class="form-label">
+                Motivo da Exclusão (obrigatório)
+              </label>
+              <textarea class="form-control" id="motivo_exclusao" name="motivo_exclusao" rows="3" required
+                        placeholder="Informe o motivo da exclusão deste usuário..."></textarea>
+              <div class="form-text">
+                Este motivo será registrado para fins de auditoria.
+              </div>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="confirmo_exclusao" required>
+              <label class="form-check-label" for="confirmo_exclusao">
+                Confirmo que li e entendi as consequências desta ação
+              </label>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <a href="{% url 'biblioteca:usuario_detail' object.pk %}" class="btn btn-outline-secondary">
+                Cancelar
+              </a>
+              <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash"></i> Sim, Excluir Usuário
+              </button>
+            </div>
+          </form>
+        {% else %}
+          <!-- Usuário não pode ser excluído -->
+          <div class="d-grid gap-2">
+            <a href="{% url 'biblioteca:usuario_detail' object.pk %}" class="btn btn-primary">
+              <i class="fas fa-arrow-left"></i> Voltar ao Usuário
+            </a>
+            <a href="{% url 'biblioteca:emprestimo_list' %}?usuario={{ object.pk }}&status=ativo" class="btn btn-outline-warning">
+              <i class="fas fa-handshake"></i> Ver Empréstimos Ativos
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

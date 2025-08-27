@@ -1,0 +1,67 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Autores - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+  <div class="col-md-8">
+    <h2>Lista de Autores</h2>
+  </div>
+  <div class="col-md-4 text-end">
+    {% if user.is_authenticated and user.is_admin %}
+      <a href="{% url 'biblioteca:autor_create' %}" class="btn btn-success">
+        Adicionar Autor
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row">
+  {% if autores %}
+    {% for autor in autores %}
+      <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title">{{ autor.nome }}</h5>
+            <p class="card-text">
+              <strong>Data de Cadastro:</strong> {{ autor.data_cadastro|date:"d/m/Y" }}<br>
+              <strong>Livros:</strong> {{ autor.livros.count }}
+            </p>
+          </div>
+          <div class="card-footer">
+            <div class="d-grid gap-2">
+              <a href="{% url 'biblioteca:autor_detail' autor.pk %}" class="btn btn-outline-primary btn-sm">
+                Ver Detalhes
+              </a>
+              
+              {% if user.is_authenticated and user.is_admin %}
+                <div class="btn-group" role="group">
+                  <a href="{% url 'biblioteca:autor_update' autor.pk %}" class="btn btn-warning btn-sm">
+                    Editar
+                  </a>
+                  <a href="{% url 'biblioteca:autor_delete' autor.pk %}" class="btn btn-danger btn-sm">
+                    Excluir
+                  </a>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12">
+      <div class="alert alert-info text-center">
+        <h4>Nenhum autor encontrado</h4>
+        <p>Não há autores cadastrados no sistema.</p>
+        {% if user.is_authenticated and user.is_admin %}
+          <a href="{% url 'biblioteca:autor_create' %}" class="btn btn-primary">
+            Adicionar Primeiro Autor
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

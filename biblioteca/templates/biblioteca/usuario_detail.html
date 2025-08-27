@@ -1,0 +1,247 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}{{ usuario.get_full_name|default:usuario.username }} - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">{{ usuario.get_full_name|default:usuario.username }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Informações Pessoais</h5>
+            <p><strong>Nome de usuário:</strong> {{ usuario.username }}</p>
+            <p><strong>Nome completo:</strong> {{ usuario.get_full_name|default:"Não informado" }}</p>
+            <p><strong>Email:</strong> {{ usuario.email|default:"Não informado" }}</p>
+            <p><strong>Tipo de usuário:</strong> {{ usuario.get_tipo_usuario_display|default:"Comum" }}</p>
+          </div>
+          <div class="col-md-6">
+            <h5>Informações do Sistema</h5>
+            <p><strong>Data de cadastro:</strong> {{ usuario.date_joined|date:"d/m/Y H:i" }}</p>
+            <p><strong>Último acesso:</strong> {{ usuario.last_login|date:"d/m/Y H:i"|default:"Nunca acessou" }}</p>
+            <p><strong>Status:</strong> 
+              {% if usuario.is_active %}
+                <span class="badge bg-success">Ativo</span>
+              {% else %}
+                <span class="badge bg-danger">Inativo</span>
+              {% endif %}
+            </p>
+            <p><strong>Permissões:</strong>
+              {% if usuario.is_superuser %}
+                <span class="badge bg-danger">Super Usuário</span>
+              {% elif usuario.is_staff %}
+                <span class="badge bg-warning">Staff</span>
+              {% else %}
+                <span class="badge bg-info">Usuário Comum</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empréstimos do Usuário -->
+    <div class="card mt-4">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="card-title mb-0">Empréstimos</h5>
+      </div>
+      <div class="card-body">
+        {% if usuario.emprestimos.all %}
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Livro</th>
+                  <th>Data Empréstimo</th>
+                  <th>Data Devolução</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for emprestimo in usuario.emprestimos.all|slice:":10" %}
+                  <tr>
+                    <td>
+                      <strong>{{ emprestimo.livro.titulo }}</strong><br>
+                      <small class="text-muted">{{ emprestimo.livro.autor.nome }}</small>
+                    </td>
+                    <td>{{ emprestimo.data_emprestimo|date:"d/m/Y" }}</td>
+                    <td>
+                      {% if emprestimo.data_devolucao %}
+                        {{ emprestimo.data_devolucao|date:"d/m/Y" }}
+                      {% else %}
+                        <span class="text-muted">Não devolvido</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if emprestimo.is_ativo %}
+                        {% if emprestimo.is_vencido %}
+                          <span class="badge bg-danger">Vencido</span>
+                        {% else %}
+                          <span class="badge bg-success">Ativo</span>
+                        {% endif %}
+                      {% else %}
+                        <span class="badge bg-secondary">Finalizado</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{% url 'biblioteca:emprestimo_detail' emprestimo.pk %}" class="btn btn-outline-primary btn-sm">
+                        Ver
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if usuario.emprestimos.count > 10 %}
+            <div class="text-center">
+              <a href="{% url 'biblioteca:emprestimo_list' %}?usuario={{ usuario.pk }}" class="btn btn-outline-primary">
+                Ver todos os empréstimos ({{ usuario.emprestimos.count }})
+              </a>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-info">
+            <p class="mb-0">Este usuário não possui empréstimos registrados.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Reservas do Usuário -->
+    <div class="card mt-4">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Reservas</h5>
+      </div>
+      <div class="card-body">
+        {% if usuario.reservas.all %}
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Livro</th>
+                  <th>Data Reserva</th>
+                  <th>Data Expiração</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for reserva in usuario.reservas.all|slice:":10" %}
+                  <tr>
+                    <td>
+                      <strong>{{ reserva.livro.titulo }}</strong><br>
+                      <small class="text-muted">{{ reserva.livro.autor.nome }}</small>
+                    </td>
+                    <td>{{ reserva.data_reserva|date:"d/m/Y H:i" }}</td>
+                    <td>{{ reserva.data_expiracao|date:"d/m/Y H:i" }}</td>
+                    <td>
+                      {% if reserva.status == 'ativa' %}
+                        <span class="badge bg-success">Ativa</span>
+                      {% elif reserva.status == 'expirada' %}
+                        <span class="badge bg-warning">Expirada</span>
+                      {% elif reserva.status == 'cancelada' %}
+                        <span class="badge bg-danger">Cancelada</span>
+                      {% else %}
+                        <span class="badge bg-secondary">{{ reserva.get_status_display }}</span>
+                      {% endif %}
+                    </td>
+                    <td>
+                      <a href="{% url 'biblioteca:livro_detail' reserva.livro.pk %}" class="btn btn-outline-primary btn-sm">
+                        Ver Livro
+                      </a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if usuario.reservas.count > 10 %}
+            <div class="text-center">
+              <a href="{% url 'biblioteca:reserva_list' %}?usuario={{ usuario.pk }}" class="btn btn-outline-primary">
+                Ver todas as reservas ({{ usuario.reservas.count }})
+              </a>
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="alert alert-info">
+            <p class="mb-0">Este usuário não possui reservas registradas.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Ações</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'biblioteca:usuario_update' usuario.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Editar Usuário
+          </a>
+          
+          {% if usuario != request.user %}
+            <a href="{% url 'biblioteca:usuario_delete' usuario.pk %}" class="btn btn-danger">
+              <i class="fas fa-trash"></i> Excluir Usuário
+            </a>
+          {% endif %}
+          
+          <hr>
+          
+          <a href="{% url 'biblioteca:emprestimo_create' %}?usuario={{ usuario.pk }}" class="btn btn-success">
+            <i class="fas fa-handshake"></i> Novo Empréstimo
+          </a>
+          
+          <a href="{% url 'biblioteca:usuario_list' %}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> Voltar à Lista
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estatísticas do Usuário -->
+    <div class="card mt-3">
+      <div class="card-header bg-secondary text-white">
+        <h6 class="card-title mb-0">Estatísticas</h6>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-6">
+            <h4 class="text-warning">{{ usuario.emprestimos_ativos|default:0 }}</h4>
+            <p class="mb-0 small">Empréstimos Ativos</p>
+          </div>
+          <div class="col-6">
+            <h4 class="text-info">{{ usuario.reservas_ativas|default:0 }}</h4>
+            <p class="mb-0 small">Reservas Ativas</p>
+          </div>
+        </div>
+        <hr>
+        <div class="row text-center">
+          <div class="col-6">
+            <h5 class="text-success">{{ usuario.total_emprestimos|default:0 }}</h5>
+            <p class="mb-0 small">Total de Empréstimos</p>
+          </div>
+          <div class="col-6">
+            <h5 class="text-primary">{{ usuario.total_reservas|default:0 }}</h5>
+            <p class="mb-0 small">Total de Reservas</p>
+          </div>
+        </div>
+        {% if usuario.emprestimos_vencidos %}
+          <hr>
+          <div class="alert alert-danger p-2">
+            <small><strong>{{ usuario.emprestimos_vencidos }} empréstimo{{ usuario.emprestimos_vencidos|pluralize }} vencido{{ usuario.emprestimos_vencidos|pluralize }}!</strong></small>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

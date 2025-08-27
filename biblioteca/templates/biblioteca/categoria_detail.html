@@ -1,0 +1,90 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}{{ categoria.nome }} - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">{{ categoria.nome }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-12">
+            <p><strong>Nome:</strong> {{ categoria.nome }}</p>
+            <p><strong>Descrição:</strong> {{ categoria.descricao|default:"Sem descrição" }}</p>
+            <p><strong>Data de Cadastro:</strong> {{ categoria.data_cadastro|date:"d/m/Y H:i" }}</p>
+          </div>
+        </div>
+
+        {% if livros_categoria %}
+        <div class="mt-4">
+          <h5>Livros nesta categoria:</h5>
+          <div class="table-responsive">
+            <table class="table table-striped">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Autor</th>
+                  <th>Disponível</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for livro in livros_categoria %}
+                <tr>
+                  <td>{{ livro.titulo }}</td>
+                  <td>{{ livro.autor.nome }}</td>
+                  <td>
+                    {% if livro.quantidade_disponivel > 0 %}
+                      <span class="badge bg-success">{{ livro.quantidade_disponivel }} disponível(is)</span>
+                    {% else %}
+                      <span class="badge bg-danger">Indisponível</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{% url 'biblioteca:livro_detail' livro.pk %}" class="btn btn-sm btn-info">
+                      <i class="fas fa-eye"></i> Ver
+                    </a>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center">Nenhum livro nesta categoria</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Ações</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'biblioteca:categoria_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar à Lista
+          </a>
+          {% if user.is_authenticated and user.is_admin %}
+            <a href="{% url 'biblioteca:categoria_update' categoria.pk %}" class="btn btn-warning">
+              <i class="fas fa-edit"></i> Editar Categoria
+            </a>
+            <a href="{% url 'biblioteca:categoria_delete' categoria.pk %}" class="btn btn-danger">
+              <i class="fas fa-trash"></i> Excluir Categoria
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

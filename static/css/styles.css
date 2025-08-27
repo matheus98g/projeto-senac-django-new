@@ -1,0 +1,281 @@
+/* Sistema de Biblioteca SENAC - Estilos Customizados */
+
+/* Variables */
+:root {
+  --primary-color: #0d6efd;
+  --secondary-color: #6c757d;
+  --success-color: #198754;
+  --warning-color: #ffc107;
+  --danger-color: #dc3545;
+  --info-color: #0dcaf0;
+  --light-color: #f8f9fa;
+  --dark-color: #212529;
+}
+
+/* General Styles */
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: var(--dark-color);
+}
+
+/* Header Styles */
+.navbar-brand {
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+/* Card Enhancements */
+.card {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Button Styles */
+.btn {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-outline-primary {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Form Styles */
+.form-control {
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Alert Styles */
+.alert {
+  border: none;
+  border-radius: 8px;
+}
+
+/* Table Styles */
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table thead th {
+  background-color: var(--light-color);
+  border-bottom: 2px solid var(--primary-color);
+  font-weight: 600;
+}
+
+/* Navigation Pills */
+.nav-pills .nav-link {
+  border-radius: 6px;
+  margin-right: 0.5rem;
+}
+
+.nav-pills .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Statistics Cards */
+.stats-card {
+  background: linear-gradient(135deg, var(--primary-color), #0b5ed7);
+  border-radius: 12px;
+  color: white;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.stats-card h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.9;
+  margin-bottom: 0.5rem;
+}
+
+.stats-card h2 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* Footer */
+footer {
+  margin-top: auto;
+  background-color: var(--light-color);
+  border-top: 1px solid #dee2e6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .stats-card {
+    margin-bottom: 1rem;
+  }
+
+  .nav-pills {
+    flex-direction: column;
+  }
+
+  .nav-pills .nav-link {
+    margin-bottom: 0.5rem;
+    margin-right: 0;
+  }
+}
+
+/* Loading animation */
+.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Custom spacing */
+.section-spacing {
+  margin: 3rem 0;
+}
+
+/* Book list styles */
+.book-item {
+  border-left: 4px solid var(--primary-color);
+  padding-left: 1rem;
+}
+
+.book-available {
+  border-left-color: var(--success-color);
+}
+
+.book-unavailable {
+  border-left-color: var(--danger-color);
+}
+
+/* User profile styles */
+.user-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+/* Badge styles */
+.badge {
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Search form */
+.search-form {
+  background-color: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+/* Pagination */
+.pagination {
+  justify-content: center;
+}
+
+.page-link {
+  border-radius: 6px;
+  margin: 0 2px;
+  border: 1px solid #dee2e6;
+}
+
+.page-link:hover {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+/* Admin dashboard */
+.admin-widget {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.admin-widget h4 {
+  color: var(--primary-color);
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* Quick actions */
+.quick-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 2rem 0;
+}
+
+.quick-action {
+  flex: 1;
+  min-width: 200px;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--dark-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.quick-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+/* Status indicators */
+.status-active {
+  color: var(--success-color);
+}
+
+.status-inactive {
+  color: var(--danger-color);
+}
+
+.status-pending {
+  color: var(--warning-color);
+}
+
+/* Print styles */
+@media print {
+  .navbar,
+  .btn,
+  .quick-actions {
+    display: none !important;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}

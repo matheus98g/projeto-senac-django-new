@@ -1,0 +1,225 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Relatórios - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-4">Relatórios do Sistema</h2>
+
+    <!-- Filtros -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Filtros</h5>
+      </div>
+      <div class="card-body">
+        <form method="get" class="row g-3">
+          <div class="col-md-3">
+            <label for="data_inicio" class="form-label">Data Início</label>
+            <input type="date" class="form-control" id="data_inicio" name="data_inicio" value="{{ request.GET.data_inicio }}">
+          </div>
+          <div class="col-md-3">
+            <label for="data_fim" class="form-label">Data Fim</label>
+            <input type="date" class="form-control" id="data_fim" name="data_fim" value="{{ request.GET.data_fim }}">
+          </div>
+          <div class="col-md-3">
+            <label for="tipo_relatorio" class="form-label">Tipo de Relatório</label>
+            <select class="form-control" id="tipo_relatorio" name="tipo_relatorio">
+              <option value="">Todos</option>
+              <option value="emprestimos" {% if request.GET.tipo_relatorio == 'emprestimos' %}selected{% endif %}>Empréstimos</option>
+              <option value="usuarios" {% if request.GET.tipo_relatorio == 'usuarios' %}selected{% endif %}>Usuários</option>
+              <option value="livros" {% if request.GET.tipo_relatorio == 'livros' %}selected{% endif %}>Livros</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&nbsp;</label>
+            <button type="submit" class="btn btn-primary d-block w-100">Gerar Relatório</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Resumo Estatístico -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Total de Empréstimos</h5>
+            <h2 class="text-primary">{{ stats.total_emprestimos|default:0 }}</h2>
+            <small class="text-muted">No período selecionado</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Livros Mais Emprestados</h5>
+            <h2 class="text-success">{{ stats.livros_populares|default:0 }}</h2>
+            <small class="text-muted">Diferentes títulos</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Usuários Ativos</h5>
+            <h2 class="text-warning">{{ stats.usuarios_ativos|default:0 }}</h2>
+            <small class="text-muted">Com empréstimos ativos</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title">Taxa de Devolução</h5>
+            <h2 class="text-info">{{ stats.taxa_devolucao|default:0 }}%</h2>
+            <small class="text-muted">No prazo</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relatório de Empréstimos -->
+    {% if not request.GET.tipo_relatorio or request.GET.tipo_relatorio == 'emprestimos' %}
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Relatório de Empréstimos</h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="exportarTabela('emprestimos')">
+          Exportar CSV
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped" id="tabelaEmprestimos">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Usuário</th>
+                <th>Livro</th>
+                <th>Status</th>
+                <th>Data Devolução</th>
+                <th>Dias em Atraso</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for emprestimo in emprestimos %}
+              <tr>
+                <td>{{ emprestimo.data_emprestimo|date:"d/m/Y" }}</td>
+                <td>{{ emprestimo.usuario.get_full_name|default:emprestimo.usuario.username }}</td>
+                <td>{{ emprestimo.livro.titulo }}</td>
+                <td>
+                  <span class="badge bg-{% if emprestimo.status == 'ativo' %}primary{% elif emprestimo.status == 'devolvido' %}success{% else %}danger{% endif %}">
+                    {{ emprestimo.get_status_display }}
+                  </span>
+                </td>
+                <td>
+                  {% if emprestimo.data_devolucao %}
+                    {{ emprestimo.data_devolucao|date:"d/m/Y" }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  {% if emprestimo.status == 'ativo' and emprestimo.data_devolucao_prevista < today %}
+                    <span class="text-danger">{{ emprestimo.dias_atraso }} dias</span>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center">Nenhum empréstimo encontrado no período</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Relatório de Livros Mais Emprestados -->
+    {% if not request.GET.tipo_relatorio or request.GET.tipo_relatorio == 'livros' %}
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Livros Mais Emprestados</h5>
+        <button class="btn btn-sm btn-outline-primary" onclick="exportarTabela('livros')">
+          Exportar CSV
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped" id="tabelaLivros">
+            <thead>
+              <tr>
+                <th>Posição</th>
+                <th>Título</th>
+                <th>Autor</th>
+                <th>Gênero</th>
+                <th>Total de Empréstimos</th>
+                <th>Disponível</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for livro in livros_populares %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ livro.titulo }}</td>
+                <td>{{ livro.autor.nome }}</td>
+                <td>{{ livro.get_genero_display }}</td>
+                <td>{{ livro.total_emprestimos }}</td>
+                <td>
+                  {% if livro.quantidade_disponivel > 0 %}
+                    <span class="badge bg-success">{{ livro.quantidade_disponivel }}</span>
+                  {% else %}
+                    <span class="badge bg-danger">Indisponível</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center">Nenhum dado disponível</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportarTabela(tipo) {
+    // Função para exportar tabela como CSV
+    let tabela = document.getElementById(`tabela${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`);
+    let csv = [];
+    let rows = tabela.querySelectorAll('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        let row = [], cols = rows[i].querySelectorAll('td, th');
+        
+        for (let j = 0; j < cols.length; j++) {
+            row.push(cols[j].innerText);
+        }
+        
+        csv.push(row.join(','));
+    }
+    
+    // Download do arquivo CSV
+    let csvFile = new Blob([csv.join('\n')], { type: 'text/csv' });
+    let downloadLink = document.createElement('a');
+    downloadLink.download = `relatorio_${tipo}_${new Date().toISOString().slice(0,10)}.csv`;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = 'none';
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+}
+</script>
+{% endblock %}

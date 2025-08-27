@@ -1,0 +1,101 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}
+  {% if form.instance.pk %}Editar{% else %}Adicionar{% endif %} Autor - Sistema de Biblioteca SENAC
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">
+          {% if form.instance.pk %}Editar{% else %}Adicionar{% endif %} Autor
+        </h3>
+      </div>
+      
+      <div class="card-body">
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <p class="mb-1">{{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label for="{{ form.nome.id_for_label }}" class="form-label">
+              Nome do Autor <span class="text-danger">*</span>
+            </label>
+            {{ form.nome }}
+            {% if form.nome.errors %}
+              <div class="text-danger small">
+                {% for error in form.nome.errors %}
+                  {{ error }}
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.nacionalidade.id_for_label }}" class="form-label">
+              Nacionalidade
+            </label>
+            {{ form.nacionalidade }}
+            {% if form.nacionalidade.errors %}
+              <div class="text-danger small">
+                {% for error in form.nacionalidade.errors %}
+                  {{ error }}
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.data_nascimento.id_for_label }}" class="form-label">
+              Data de Nascimento
+            </label>
+            {{ form.data_nascimento }}
+            {% if form.data_nascimento.errors %}
+              <div class="text-danger small">
+                {% for error in form.data_nascimento.errors %}
+                  {{ error }}
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.biografia.id_for_label }}" class="form-label">
+              Biografia
+            </label>
+            {{ form.biografia }}
+            {% if form.biografia.errors %}
+              <div class="text-danger small">
+                {% for error in form.biografia.errors %}
+                  {{ error }}
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'biblioteca:autor_list' %}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+            <button type="submit" class="btn btn-primary">
+              {% if form.instance.pk %}Atualizar{% else %}Adicionar{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

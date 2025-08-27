@@ -1,0 +1,77 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Cancelar Reserva - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-warning text-dark">
+        <h3 class="card-title mb-0">Cancelar Reserva</h3>
+      </div>
+      
+      <div class="card-body">
+        <h5>Tem certeza que deseja cancelar sua reserva?</h5>
+        
+        <!-- Informações da Reserva -->
+        <div class="card mb-3">
+          <div class="card-body">
+            <h6 class="card-title">{{ reserva.livro.titulo }}</h6>
+            <p class="card-text">
+              <small class="text-muted">por {{ reserva.livro.autor.nome }}</small><br>
+              <strong>Data da Reserva:</strong> {{ reserva.data_reserva|date:"d/m/Y H:i" }}<br>
+              <strong>Expira em:</strong> {{ reserva.data_expiracao|date:"d/m/Y H:i" }}<br>
+              <strong>Status:</strong> 
+              <span class="badge bg-success">{{ reserva.get_status_display }}</span>
+            </p>
+          </div>
+        </div>
+        
+        <div class="alert alert-info">
+          <h6><i class="fas fa-info-circle"></i> Informações importantes:</h6>
+          <ul class="mb-0">
+            <li>O cancelamento é <strong>irreversível</strong></li>
+            <li>O livro ficará disponível para outros usuários</li>
+            <li>Você poderá fazer uma nova reserva posteriormente</li>
+            <li>Cancelamentos frequentes podem afetar sua prioridade no sistema</li>
+          </ul>
+        </div>
+
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <p class="mb-1">{{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label for="{{ form.motivo_cancelamento.id_for_label }}" class="form-label">
+              Motivo do Cancelamento (opcional)
+            </label>
+            {{ form.motivo_cancelamento }}
+            <div class="form-text">
+              Nos ajude a melhorar informando o motivo do cancelamento.
+            </div>
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'biblioteca:minhas_reservas' %}" class="btn btn-outline-secondary">
+              Manter Reserva
+            </a>
+            <button type="submit" class="btn btn-warning">
+              <i class="fas fa-times-circle"></i> Sim, Cancelar Reserva
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}{{ autor.nome }} - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">{{ autor.nome }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Nome:</strong> {{ autor.nome }}</p>
+            <p><strong>Nacionalidade:</strong> {{ autor.nacionalidade|default:"Não informado" }}</p>
+            <p><strong>Data de Nascimento:</strong> {{ autor.data_nascimento|date:"d/m/Y"|default:"Não informado" }}</p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Biografia:</strong></p>
+            <p>{{ autor.biografia|default:"Biografia não disponível" }}</p>
+            <p><strong>Data de Cadastro:</strong> {{ autor.data_cadastro|date:"d/m/Y H:i" }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Livros do Autor -->
+    <div class="card mt-4">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Livros de {{ autor.nome }}</h5>
+      </div>
+      <div class="card-body">
+        {% if autor.livros.all %}
+          <div class="row">
+            {% for livro in autor.livros.all %}
+              <div class="col-md-6 mb-3">
+                <div class="card">
+                  <div class="card-body">
+                    <h6 class="card-title">{{ livro.titulo }}</h6>
+                    <p class="card-text">
+                      <small class="text-muted">{{ livro.get_genero_display }}</small><br>
+                      <strong>Disponível:</strong> {{ livro.quantidade_disponivel }}/{{ livro.quantidade }}
+                    </p>
+                    <a href="{% url 'biblioteca:livro_detail' livro.pk %}" class="btn btn-outline-primary btn-sm">
+                      Ver Detalhes
+                    </a>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info">
+            <p class="mb-0">Este autor ainda não possui livros cadastrados no sistema.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Ações</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          {% if user.is_authenticated and user.is_admin %}
+            <a href="{% url 'biblioteca:autor_update' autor.pk %}" class="btn btn-warning">
+              Editar Autor
+            </a>
+            <a href="{% url 'biblioteca:autor_delete' autor.pk %}" class="btn btn-danger">
+              Excluir Autor
+            </a>
+            <hr>
+          {% endif %}
+          
+          <a href="{% url 'biblioteca:autor_list' %}" class="btn btn-outline-primary">
+            Voltar à Lista de Autores
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="card mt-3">
+      <div class="card-header bg-secondary text-white">
+        <h6 class="card-title mb-0">Estatísticas</h6>
+      </div>
+      <div class="card-body">
+        <p><strong>Total de Livros:</strong> {{ autor.livros.count }}</p>
+        <p><strong>Livros Disponíveis:</strong> {{ autor.livros_disponiveis|default:0 }}</p>
+        <p><strong>Livros Emprestados:</strong> {{ autor.livros_emprestados|default:0 }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

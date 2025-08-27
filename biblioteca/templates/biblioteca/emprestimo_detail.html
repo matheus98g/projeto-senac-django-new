@@ -1,0 +1,83 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Detalhes do Empréstimo - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Detalhes do Empréstimo</h2>
+      <a href="{% url 'biblioteca:emprestimo_list' %}" class="btn btn-secondary">
+        Voltar à Lista
+      </a>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Informações do Usuário</h5>
+            <p><strong>Nome:</strong> {{ emprestimo.usuario.get_full_name|default:emprestimo.usuario.username }}</p>
+            <p><strong>Email:</strong> {{ emprestimo.usuario.email }}</p>
+            <p><strong>Tipo:</strong> {{ emprestimo.usuario.get_tipo_usuario_display }}</p>
+          </div>
+          <div class="col-md-6">
+            <h5>Informações do Livro</h5>
+            <p><strong>Título:</strong> {{ emprestimo.livro.titulo }}</p>
+            <p><strong>Autor:</strong> {{ emprestimo.livro.autor.nome }}</p>
+            <p><strong>Gênero:</strong> {{ emprestimo.livro.get_genero_display }}</p>
+          </div>
+        </div>
+        
+        <hr>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Datas do Empréstimo</h5>
+            <p><strong>Data do Empréstimo:</strong> {{ emprestimo.data_emprestimo|date:"d/m/Y H:i" }}</p>
+            <p><strong>Data Prevista para Devolução:</strong> {{ emprestimo.data_devolucao_prevista|date:"d/m/Y" }}</p>
+            {% if emprestimo.data_devolucao %}
+              <p><strong>Data de Devolução:</strong> {{ emprestimo.data_devolucao|date:"d/m/Y H:i" }}</p>
+            {% endif %}
+          </div>
+          <div class="col-md-6">
+            <h5>Status e Informações</h5>
+            <p>
+              <strong>Status:</strong> 
+              <span class="badge bg-{% if emprestimo.status == 'ativo' %}primary{% elif emprestimo.status == 'devolvido' %}success{% else %}danger{% endif %}">
+                {{ emprestimo.get_status_display }}
+              </span>
+            </p>
+            <p><strong>Número de Renovações:</strong> {{ emprestimo.renovacoes }}</p>
+            
+            {% if emprestimo.status == 'ativo' %}
+              {% if emprestimo.data_devolucao_prevista < today %}
+                <div class="alert alert-danger">
+                  <strong>Atenção:</strong> Este empréstimo está em atraso!
+                </div>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+        
+        {% if emprestimo.status == 'ativo' %}
+        <hr>
+        <div class="d-flex gap-2">
+          <a href="{% url 'biblioteca:devolver_livro' emprestimo.pk %}" class="btn btn-success">
+            Devolver Livro
+          </a>
+          {% if emprestimo.renovacoes < 3 %}
+            <a href="{% url 'biblioteca:renovar_emprestimo' emprestimo.pk %}" class="btn btn-warning">
+              Renovar Empréstimo
+            </a>
+          {% else %}
+            <span class="btn btn-secondary disabled">Limite de renovações atingido</span>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

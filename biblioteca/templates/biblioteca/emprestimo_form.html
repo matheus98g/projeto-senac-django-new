@@ -1,0 +1,65 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Editar{% else %}Novo{% endif %} Empréstimo - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">
+          {% if object %}Editar{% else %}Novo{% endif %} Empréstimo
+        </h3>
+      </div>
+      <div class="card-body">
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <p class="mb-1">{{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+          
+          <div class="mb-3">
+            <label for="{{ form.usuario.id_for_label }}" class="form-label">
+              Usuário
+            </label>
+            {{ form.usuario }}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.livro.id_for_label }}" class="form-label">
+              Livro
+            </label>
+            {{ form.livro }}
+          </div>
+
+          <div class="alert alert-info">
+            <h6>Informações do Empréstimo:</h6>
+            <ul class="mb-0">
+              <li>Prazo padrão: 15 dias</li>
+              <li>Máximo de renovações: 3</li>
+              <li>Apenas livros disponíveis podem ser emprestados</li>
+            </ul>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              {% if object %}Atualizar{% else %}Criar{% endif %} Empréstimo
+            </button>
+            <a href="{% url 'biblioteca:emprestimo_list' %}" class="btn btn-secondary">
+              Cancelar
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

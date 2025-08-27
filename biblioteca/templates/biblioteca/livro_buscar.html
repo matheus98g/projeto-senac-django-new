@@ -1,0 +1,88 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Buscar Livros - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2>Buscar Livros</h2>
+    
+    <div class="card mb-4">
+      <div class="card-body">
+        <form method="get" class="row g-3">
+          <div class="col-md-8">
+            <label for="q" class="form-label">Buscar por título, autor ou ISBN</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              id="q" 
+              name="q" 
+              value="{{ request.GET.q }}"
+              placeholder="Digite sua pesquisa..."
+            >
+          </div>
+          <div class="col-md-3">
+            <label for="genero" class="form-label">Gênero</label>
+            <select class="form-control" id="genero" name="genero">
+              <option value="">Todos os gêneros</option>
+              <option value="ficcao" {% if request.GET.genero == 'ficcao' %}selected{% endif %}>Ficção</option>
+              <option value="nao_ficcao" {% if request.GET.genero == 'nao_ficcao' %}selected{% endif %}>Não Ficção</option>
+              <option value="fantasia" {% if request.GET.genero == 'fantasia' %}selected{% endif %}>Fantasia</option>
+              <option value="romance" {% if request.GET.genero == 'romance' %}selected{% endif %}>Romance</option>
+              <option value="suspense" {% if request.GET.genero == 'suspense' %}selected{% endif %}>Suspense</option>
+              <option value="terror" {% if request.GET.genero == 'terror' %}selected{% endif %}>Terror</option>
+              <option value="biografia" {% if request.GET.genero == 'biografia' %}selected{% endif %}>Biografia</option>
+              <option value="autoajuda" {% if request.GET.genero == 'autoajuda' %}selected{% endif %}>Autoajuda</option>
+              <option value="educacional" {% if request.GET.genero == 'educacional' %}selected{% endif %}>Educacional</option>
+            </select>
+          </div>
+          <div class="col-md-1">
+            <label class="form-label">&nbsp;</label>
+            <button type="submit" class="btn btn-primary d-block w-100">Buscar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    {% if request.GET.q %}
+    <div class="alert alert-info">
+      Resultados para: <strong>{{ request.GET.q }}</strong>
+    </div>
+    {% endif %}
+
+    <div class="row">
+      {% for livro in livros %}
+      <div class="col-md-4 mb-4">
+        <div class="card">
+          <div class="card-body">
+            <h5 class="card-title">{{ livro.titulo }}</h5>
+            <p class="card-text">
+              <strong>Autor:</strong> {{ livro.autor.nome }}<br>
+              <strong>Gênero:</strong> {{ livro.get_genero_display }}<br>
+              <strong>Disponível:</strong> {{ livro.quantidade_disponivel }} de {{ livro.quantidade }}
+            </p>
+            <a href="{% url 'biblioteca:livro_detail' livro.pk %}" class="btn btn-primary btn-sm">Ver Detalhes</a>
+            {% if livro.quantidade_disponivel > 0 %}
+              <a href="{% url 'biblioteca:reservar_livro' livro.pk %}" class="btn btn-success btn-sm">Reservar</a>
+            {% else %}
+              <span class="btn btn-secondary btn-sm disabled">Indisponível</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% empty %}
+      <div class="col-12">
+        <div class="alert alert-warning">
+          {% if request.GET.q %}
+            Nenhum livro encontrado para sua pesquisa.
+          {% else %}
+            Use o formulário acima para buscar livros.
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

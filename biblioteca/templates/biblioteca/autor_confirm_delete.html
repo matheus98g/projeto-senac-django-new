@@ -1,0 +1,49 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Exclusão - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-danger text-white">
+        <h3 class="card-title mb-0">Confirmar Exclusão</h3>
+      </div>
+      
+      <div class="card-body">
+        <h5>Tem certeza que deseja excluir o autor:</h5>
+        <p class="lead">"{{ object.nome }}"?</p>
+        
+        {% if object.livros.count > 0 %}
+          <div class="alert alert-warning">
+            <strong>Atenção:</strong> Este autor possui {{ object.livros.count }} livro{{ object.livros.count|pluralize }} cadastrado{{ object.livros.count|pluralize }}:
+            <ul class="mt-2 mb-0">
+              {% for livro in object.livros.all %}
+                <li>{{ livro.titulo }}</li>
+              {% endfor %}
+            </ul>
+            <p class="mt-2 mb-0">A exclusão do autor também removerá todos os seus livros do sistema!</p>
+          </div>
+        {% endif %}
+        
+        <div class="alert alert-danger">
+          <strong>Atenção:</strong> Esta ação não pode ser desfeita!
+        </div>
+
+        <form method="post">
+          {% csrf_token %}
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <a href="{% url 'biblioteca:autor_detail' object.pk %}" class="btn btn-outline-secondary">
+              Cancelar
+            </a>
+            <button type="submit" class="btn btn-danger">
+              Sim, Excluir
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

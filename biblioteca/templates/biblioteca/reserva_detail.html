@@ -1,0 +1,115 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Detalhes da Reserva - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0">Detalhes da Reserva #{{ reserva.id }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6">
+            <p><strong>Usuário:</strong> {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</p>
+            <p><strong>Status:</strong> 
+              {% if reserva.status == 'ativa' %}
+                <span class="badge bg-success">Ativa</span>
+              {% elif reserva.status == 'concluida' %}
+                <span class="badge bg-primary">Concluída</span>
+              {% elif reserva.status == 'cancelada' %}
+                <span class="badge bg-danger">Cancelada</span>
+              {% elif reserva.status == 'expirada' %}
+                <span class="badge bg-secondary">Expirada</span>
+              {% else %}
+                <span class="badge bg-info">{{ reserva.status }}</span>
+              {% endif %}
+            </p>
+            <p><strong>Data da Reserva:</strong> {{ reserva.data_reserva|date:"d/m/Y H:i" }}</p>
+            <p><strong>Data de Expiração:</strong> {{ reserva.data_expiracao|date:"d/m/Y H:i" }}</p>
+          </div>
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">Livro Reservado</h5>
+              </div>
+              <div class="card-body">
+                <h5>{{ reserva.livro.titulo }}</h5>
+                <p><strong>Autor:</strong> {{ reserva.livro.autor.nome }}</p>
+                <p><strong>Gênero:</strong> {{ reserva.livro.get_genero_display }}</p>
+                <a href="{% url 'biblioteca:livro_detail' reserva.livro.pk %}" class="btn btn-sm btn-info">
+                  <i class="fas fa-book"></i> Ver Detalhes do Livro
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if reserva.observacoes %}
+    <div class="card mt-3">
+      <div class="card-header bg-secondary text-white">
+        <h5 class="card-title mb-0">Observações</h5>
+      </div>
+      <div class="card-body">
+        <p>{{ reserva.observacoes|linebreaks }}</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header bg-info text-white">
+        <h5 class="card-title mb-0">Ações</h5>
+      </div>
+      <div class="card-body">
+        <div class="d-grid gap-2">
+          <a href="{% url 'biblioteca:reserva_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar à Lista
+          </a>
+          
+          {% if user.is_authenticated and user.is_admin %}
+            {% if reserva.status == 'ativa' %}
+              <form method="post" action="{% url 'biblioteca:cancelar_reserva' reserva.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger w-100">
+                  <i class="fas fa-times-circle"></i> Cancelar Reserva
+                </button>
+              </form>
+              
+              <a href="{% url 'biblioteca:emprestimo_create' %}?reserva={{ reserva.pk }}" class="btn btn-success">
+                <i class="fas fa-exchange-alt"></i> Converter em Empréstimo
+              </a>
+            {% endif %}
+          {% elif user == reserva.usuario and reserva.status == 'ativa' %}
+            <form method="post" action="{% url 'biblioteca:cancelar_reserva' reserva.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger w-100">
+                <i class="fas fa-times-circle"></i> Cancelar Minha Reserva
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if user.is_authenticated and user.is_admin %}
+    <div class="card mt-3">
+      <div class="card-header bg-warning text-dark">
+        <h5 class="card-title mb-0">Informações Adicionais</h5>
+      </div>
+      <div class="card-body">
+        <p><strong>ID da Reserva:</strong> {{ reserva.id }}</p>
+        <p><strong>ID do Usuário:</strong> {{ reserva.usuario.id }}</p>
+        <p><strong>ID do Livro:</strong> {{ reserva.livro.id }}</p>
+        <p><strong>Última Atualização:</strong> {{ reserva.ultima_atualizacao|date:"d/m/Y H:i"|default:"N/A" }}</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

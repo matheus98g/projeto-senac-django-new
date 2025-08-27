@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: biblioteca-senac
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn bibliotecasenac.wsgi:application"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"

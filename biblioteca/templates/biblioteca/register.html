@@ -1,0 +1,93 @@
+{% extends 'biblioteca/base.html' %}
+{% load static %}
+
+{% block title %}Cadastro - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8 col-lg-6">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h3 class="card-title mb-0 text-center">Criar Nova Conta</h3>
+      </div>
+      
+      <div class="card-body">
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <p class="mb-1">{{ error }}</p>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                Nome
+              </label>
+              {{ form.first_name }}
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                Sobrenome
+              </label>
+              {{ form.last_name }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.username.id_for_label }}" class="form-label">
+              Nome de usuário
+            </label>
+            {{ form.username }}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.email.id_for_label }}" class="form-label">
+              E-mail
+            </label>
+            {{ form.email }}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.password1.id_for_label }}" class="form-label">
+              Senha
+            </label>
+            {{ form.password1 }}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.password2.id_for_label }}" class="form-label">
+              Confirme a senha
+            </label>
+            {{ form.password2 }}
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">
+              Criar Conta
+            </button>
+          </div>
+        </form>
+
+        <hr />
+
+        <div class="text-center">
+          <p class="mb-0">
+            Já tem uma conta?
+            <a href="{% url 'biblioteca:login' %}" class="text-decoration-none">
+              Faça login aqui
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Login - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5 col-xl-4">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-book-open fa-3x"></i>
+                </div>
+                <h4 class="mb-0">Biblioteca SENAC</h4>
+                <p class="mb-0 opacity-75">Faça login para continuar</p>
+            </div>
+            
+            <div class="card-body p-4">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Username Field -->
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">
+                            <i class="fas fa-user me-2"></i>Usuário
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            {{ form.username }}
+                        </div>
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.username.help_text %}
+                            <div class="form-text">{{ form.username.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Password Field -->
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">
+                            <i class="fas fa-lock me-2"></i>Senha
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            {{ form.password }}
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.password.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        {% if form.password.help_text %}
+                            <div class="form-text">{{ form.password.help_text }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Remember Me Checkbox -->
+                    {% if form.remember_me %}
+                    <div class="mb-3 form-check">
+                        {{ form.remember_me }}
+                        <label class="form-check-label" for="{{ form.remember_me.id_for_label }}">
+                            Lembrar de mim
+                        </label>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Entrar
+                        </button>
+                    </div>
+                    
+                    <!-- Forgot Password Link -->
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Erro de login:</strong> Verifique suas credenciais e tente novamente.
+                        </div>
+                    {% endif %}
+                </form>
+                
+                <!-- Divider -->
+                <div class="text-center my-4">
+                    <span class="bg-white px-3 text-muted">ou</span>
+                    <hr class="my-0">
+                </div>
+                
+                <!-- Register Link -->
+                <div class="text-center">
+                    <p class="text-muted mb-2">Não tem uma conta?</p>
+                    <a href="{% url 'biblioteca:register' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Criar Conta
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="card-footer text-center py-3 bg-light">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Seus dados estão seguros conosco
+                </small>
+            </div>
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="text-center mt-4">
+            <p class="text-muted small">
+                <i class="fas fa-info-circle me-1"></i>
+                Em caso de problemas, entre em contato com o administrador do sistema.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Custom styling for form fields */
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Password toggle button styling */
+#togglePassword {
+    border-left: none;
+}
+
+#togglePassword:hover {
+    background-color: #e9ecef;
+}
+
+/* Card shadow enhancement */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Form validation styling */
+.form-control.is-invalid {
+    border-color: var(--danger-color);
+}
+
+.form-control.is-valid {
+    border-color: var(--success-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .card-header {
+        padding: 1.5rem 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password toggle functionality
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordField = document.querySelector('input[name="password"]');
+    
+    if (togglePassword && passwordField) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordField.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('fa-eye');
+            icon.classList.toggle('fa-eye-slash');
+        });
+    }
+    
+    // Auto-focus on username field
+    const usernameField = document.querySelector('input[name="username"]');
+    if (usernameField) {
+        usernameField.focus();
+    }
+    
+    // Form validation enhancement
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const username = document.querySelector('input[name="username"]');
+            const password = document.querySelector('input[name="password"]');
+            
+            // Remove previous validation classes
+            username.classList.remove('is-invalid', 'is-valid');
+            password.classList.remove('is-invalid', 'is-valid');
+            
+            let isValid = true;
+            
+            // Validate username
+            if (!username.value.trim()) {
+                username.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                username.classList.add('is-valid');
+            }
+            
+            // Validate password
+            if (!password.value.trim()) {
+                password.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                password.classList.add('is-valid');
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                
+                // Show error message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Erro:</strong> Por favor, preencha todos os campos obrigatórios.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                const form = document.querySelector('form');
+                form.insertBefore(alertDiv, form.firstChild);
+                
+                // Auto-hide alert after 5 seconds
+                setTimeout(function() {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+        });
+    }
+    
+    // Auto-hide success messages
+    const successAlerts = document.querySelectorAll('.alert-success');
+    successAlerts.forEach(function(alert) {
+        setTimeout(function() {
+            if (alert.parentNode) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        }, 5000);
+    });
+});
+</script>
+{% endblock %}

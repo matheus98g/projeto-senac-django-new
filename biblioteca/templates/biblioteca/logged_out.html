@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Logout - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5 col-xl-4">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-success text-white text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-check-circle fa-3x"></i>
+                </div>
+                <h4 class="mb-0">Logout Realizado</h4>
+                <p class="mb-0 opacity-75">Você foi desconectado com sucesso</p>
+            </div>
+            
+            <div class="card-body p-4 text-center">
+                <div class="mb-4">
+                    <i class="fas fa-sign-out-alt fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">Até logo!</h5>
+                    <p class="text-muted">
+                        Obrigado por usar o Sistema de Biblioteca SENAC. 
+                        Sua sessão foi encerrada com segurança.
+                    </p>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <a href="{% url 'biblioteca:login' %}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Fazer Login Novamente
+                    </a>
+                    
+                    <a href="{% url 'biblioteca:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>
+                        Voltar ao Início
+                    </a>
+                </div>
+                
+                <!-- Additional Info -->
+                <div class="mt-4 pt-3 border-top">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Por segurança, todas as suas sessões foram encerradas.
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="card-footer text-center py-3 bg-light">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Sistema protegido e seguro
+                </small>
+            </div>
+        </div>
+        
+        <!-- Session Security Info -->
+        <div class="text-center mt-4">
+            <div class="alert alert-info" role="alert">
+                <i class="fas fa-lock me-2"></i>
+                <strong>Dica de Segurança:</strong> 
+                Sempre faça logout ao terminar de usar o sistema em computadores compartilhados.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Card styling */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Icon styling */
+.fa-check-circle {
+    color: #28a745;
+}
+
+.fa-sign-out-alt {
+    color: #6c757d;
+}
+
+/* Button styling */
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .card-header {
+        padding: 1.5rem 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-redirect to login after 10 seconds
+    setTimeout(function() {
+        window.location.href = "{% url 'biblioteca:login' %}";
+    }, 10000);
+    
+    // Countdown timer
+    let countdown = 10;
+    const countdownElement = document.createElement('div');
+    countdownElement.className = 'text-center mt-3';
+    countdownElement.innerHTML = `
+        <small class="text-muted">
+            <i class="fas fa-clock me-1"></i>
+            Redirecionando em <span id="countdown">${countdown}</span> segundos...
+        </small>
+    `;
+    
+    const cardBody = document.querySelector('.card-body');
+    if (cardBody) {
+        cardBody.appendChild(countdownElement);
+        
+        const countdownSpan = document.getElementById('countdown');
+        const timer = setInterval(function() {
+            countdown--;
+            if (countdownSpan) {
+                countdownSpan.textContent = countdown;
+            }
+            
+            if (countdown <= 0) {
+                clearInterval(timer);
+            }
+        }, 1000);
+    }
+    
+    // Prevent auto-redirect if user is interacting
+    let userInteracting = false;
+    
+    document.addEventListener('click', function() {
+        userInteracting = true;
+    });
+    
+    document.addEventListener('keydown', function() {
+        userInteracting = true;
+    });
+    
+    // Clear auto-redirect if user is interacting
+    if (userInteracting) {
+        clearTimeout(window.autoRedirectTimer);
+    }
+});
+</script>
+{% endblock %}

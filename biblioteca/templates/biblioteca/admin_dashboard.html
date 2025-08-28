@@ -1,0 +1,406 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Painel Administrativo - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-cog text-primary me-2"></i>
+                    Painel Administrativo
+                </h1>
+                <p class="text-muted mb-0">Gerencie o sistema de biblioteca</p>
+            </div>
+            <div class="text-end">
+                <p class="text-muted mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    {% now "d/m/Y" %}
+                </p>
+                <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i>
+                    {% now "H:i" %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Total de Livros</h5>
+                    <h2>{{ total_livros|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-books fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #198754, #146c43);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Total de Usuários</h5>
+                    <h2>{{ total_usuarios|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #0dcaf0, #0aa2c0);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Empréstimos Ativos</h5>
+                    <h2>{{ emprestimos_ativos|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #ffc107, #e0a800);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Reservas Ativas</h5>
+                    <h2>{{ reservas_ativas|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-bookmark fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions for Admins -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="fas fa-bolt text-warning me-2"></i>
+            Ações Rápidas
+        </h4>
+        <div class="quick-actions">
+            <a href="{% url 'biblioteca:livro_create' %}" class="quick-action">
+                <div class="text-center">
+                    <i class="fas fa-plus fa-2x text-primary mb-2"></i>
+                    <h6>Adicionar Livro</h6>
+                    <small class="text-muted">Cadastrar novo livro</small>
+                </div>
+            </a>
+            
+            <a href="{% url 'biblioteca:emprestimo_create' %}" class="quick-action">
+                <div class="text-center">
+                    <i class="fas fa-exchange-alt fa-2x text-success mb-2"></i>
+                    <h6>Novo Empréstimo</h6>
+                    <small class="text-muted">Registrar empréstimo</small>
+                </div>
+            </a>
+            
+            <a href="{% url 'biblioteca:usuario_list' %}" class="quick-action">
+                <div class="text-center">
+                    <i class="fas fa-users fa-2x text-info mb-2"></i>
+                    <h6>Gerenciar Usuários</h6>
+                    <small class="text-muted">Ver todos os usuários</small>
+                </div>
+            </a>
+            
+            <a href="{% url 'biblioteca:relatorios' %}" class="quick-action">
+                <div class="text-center">
+                    <i class="fas fa-chart-bar fa-2x text-warning mb-2"></i>
+                    <h6>Relatórios</h6>
+                    <small class="text-muted">Gerar relatórios</small>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts and Warnings -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+            Alertas e Avisos
+        </h4>
+        
+        <!-- Overdue Loans Alert -->
+        {% if emprestimos_vencidos %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading">Empréstimos em Atraso!</h6>
+                    <p class="mb-0">Existem {{ emprestimos_vencidos|length }} empréstimos em atraso que precisam de atenção.</p>
+                </div>
+                <a href="{% url 'biblioteca:emprestimo_list' %}" class="btn btn-outline-danger ms-3">
+                    Ver Detalhes
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Expired Reservations Alert -->
+        {% if reservas_expirando %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-clock fa-2x me-3"></i>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading">Reservas Expiradas</h6>
+                    <p class="mb-0">Existem {{ reservas_expirando|length }} reservas expiradas que podem ser canceladas.</p>
+                </div>
+                <a href="{% url 'biblioteca:reserva_list' %}" class="btn btn-outline-warning ms-3">
+                    Ver Detalhes
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Low Stock Alert -->
+        {% if livros_sem_estoque %}
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-boxes fa-2x me-3"></i>
+                <div class="flex-grow-1">
+                    <h6 class="alert-heading">Estoque Baixo</h6>
+                    <p class="mb-0">Existem {{ livros_sem_estoque|length }} livros sem estoque disponível.</p>
+                </div>
+                <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-outline-info ms-3">
+                    Ver Detalhes
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- No Alerts -->
+        {% if not emprestimos_vencidos and not reservas_expirando and not livros_sem_estoque %}
+        <div class="alert alert-success" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle fa-2x me-3"></i>
+                <div>
+                    <h6 class="alert-heading">Tudo em Ordem!</h6>
+                    <p class="mb-0">Não há alertas ou problemas pendentes no sistema.</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- System Overview -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <!-- Recent Activities -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Atividades Recentes
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if atividades_recentes %}
+                    <div class="list-group list-group-flush">
+                        {% for atividade in atividades_recentes %}
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-circle text-primary fa-xs"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ atividade.titulo }}</h6>
+                                <small class="text-muted">{{ atividade.descricao }}</small>
+                            </div>
+                            <small class="text-muted">{{ atividade.data|date:"d/m H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma atividade recente registrada.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar with System Status -->
+    <div class="col-lg-4 mb-4">
+        <!-- System Status -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-server me-2"></i>
+                    Status do Sistema
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Banco de Dados</span>
+                    <span class="badge bg-success">Online</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Arquivos</span>
+                    <span class="badge bg-success">OK</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Cache</span>
+                    <span class="badge bg-success">Ativo</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Sistema</span>
+                    <span class="badge bg-success">Online</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Estatísticas Rápidas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="p-2 bg-light rounded">
+                            <div class="h5 mb-1 text-primary">{{ total_livros|default:0 }}</div>
+                            <small class="text-muted">Livros</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-2 bg-light rounded">
+                            <div class="h5 mb-1 text-success">{{ total_usuarios|default:0 }}</div>
+                            <small class="text-muted">Usuários</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-2 bg-light rounded">
+                            <div class="h5 mb-1 text-info">{{ emprestimos_ativos|default:0 }}</div>
+                            <small class="text-muted">Empréstimos</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="p-2 bg-light rounded">
+                            <div class="h5 mb-1 text-warning">{{ reservas_ativas|default:0 }}</div>
+                            <small class="text-muted">Reservas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Management Links -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-tools me-2"></i>
+                    Ferramentas de Gerenciamento
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'biblioteca:livro_list' %}" class="text-decoration-none">
+                            <div class="p-3 border rounded text-center h-100">
+                                <i class="fas fa-books fa-2x text-primary mb-2"></i>
+                                <h6>Gerenciar Livros</h6>
+                                <small class="text-muted">Adicionar, editar e remover livros</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'biblioteca:usuario_list' %}" class="text-decoration-none">
+                            <div class="p-3 border rounded text-center h-100">
+                                <i class="fas fa-users fa-2x text-success mb-2"></i>
+                                <h6>Gerenciar Usuários</h6>
+                                <small class="text-muted">Controle de usuários e permissões</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'biblioteca:emprestimo_list' %}" class="text-decoration-none">
+                            <div class="p-3 border rounded text-center h-100">
+                                <i class="fas fa-exchange-alt fa-2x text-info mb-2"></i>
+                                <h6>Gerenciar Empréstimos</h6>
+                                <small class="text-muted">Controle de empréstimos e devoluções</small>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'biblioteca:reserva_list' %}" class="text-decoration-none">
+                            <div class="p-3 border rounded text-center h-100">
+                                <i class="fas fa-bookmark fa-2x text-warning mb-2"></i>
+                                <h6>Gerenciar Reservas</h6>
+                                <small class="text-muted">Controle de reservas e expirações</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Atualizar horário em tempo real
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    const dateString = now.toLocaleDateString('pt-BR');
+    
+    // Atualizar elementos de tempo (se existirem)
+    const timeElements = document.querySelectorAll('.current-time');
+    timeElements.forEach(el => el.textContent = timeString);
+    
+    const dateElements = document.querySelectorAll('.current-date');
+    dateElements.forEach(el => el.textContent = dateString);
+}
+
+// Atualizar a cada minuto
+setInterval(updateTime, 60000);
+updateTime(); // Executar imediatamente
+
+// Auto-hide alerts after 10 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            if (alert.classList.contains('alert-success')) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        });
+    }, 10000);
+});
+</script>
+{% endblock %}

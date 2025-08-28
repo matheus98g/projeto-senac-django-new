@@ -1,227 +1,240 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Livros - Sistema de Biblioteca SENAC</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-    />
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
-  </head>
-  <body>
-    <header class="bg-primary text-white py-4 mb-4">
-      <div class="container">
-        <h1 class="mb-3">
-          <a
-            href="{% url 'biblioteca:home' %}"
-            class="text-white text-decoration-none"
-          >
-            Biblioteca Senac
-          </a>
+{% extends 'base.html' %}
+
+{% block title %}Livros - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">
+            <i class="fas fa-books me-2 text-primary"></i>Catálogo de Livros
         </h1>
-        <nav>
-          <ul class="nav nav-pills">
-            {% if user.is_authenticated and user.is_admin %}
-            <li class="nav-item">
-              <a class="nav-link text-white" href="{% url 'biblioteca:home' %}">Home</a>
-            </li>
-            {% endif %}
-            <li class="nav-item">
-              <a class="nav-link text-white active" href="{% url 'biblioteca:livro_list' %}">Livros</a>
-            </li>
-            {% if user.is_authenticated %}
-            <li class="nav-item">
-              <a class="nav-link text-white" href="{% url 'biblioteca:profile' %}">Perfil</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link text-white" href="{% url 'biblioteca:logout' %}">Sair</a>
-            </li>
-            {% else %}
-            <li class="nav-item">
-              <a class="nav-link text-white" href="{% url 'biblioteca:login' %}">Entrar</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link text-white" href="{% url 'biblioteca:register' %}">Cadastrar</a>
-            </li>
-            {% endif %}
-          </ul>
-        </nav>
-      </div>
-    </header>
+        <p class="text-muted mb-0">Explore nossa coleção de livros</p>
+    </div>
+    {% if user.is_authenticated and user.is_admin %}
+        <a href="{% url 'biblioteca:livro_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Adicionar Livro
+        </a>
+    {% endif %}
+</div>
 
-    <main class="container">
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2>Catálogo de Livros</h2>
-        </div>
-        <div class="col-md-4 text-end">
-          {% if user.is_authenticated and user.is_admin %}
-          <a href="{% url 'biblioteca:livro_create' %}" class="btn btn-success"
-            >Adicionar Livro</a
-          >
-          {% endif %}
-        </div>
-      </div>
-
-      <!-- Search Form -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <form method="get" class="row g-3">
-            <div class="col-md-8">
-              <input
-                type="text"
-                name="q"
-                class="form-control"
-                placeholder="Buscar por título, autor..."
-                value="{{ request.GET.q }}"
-              />
+<!-- Search and Filter Form -->
+<div class="search-form">
+    <form method="get" class="row g-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" 
+                       class="form-control" 
+                       name="q" 
+                       value="{{ request.GET.q }}" 
+                       placeholder="Buscar por título ou autor...">
+                <button type="submit" class="btn btn-outline-primary">Buscar</button>
             </div>
-            <div class="col-md-2">
-              <select name="genero" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <select name="genero" class="form-select">
                 <option value="">Todos os gêneros</option>
-                <option value="ficcao">Ficção</option>
-                <option value="nao_ficcao">Não Ficção</option>
-                <option value="fantasia">Fantasia</option>
-                <option value="aventura">Aventura</option>
-                <option value="romance">Romance</option>
-                <option value="suspense">Suspense</option>
-                <option value="terror">Terror</option>
-                <option value="biografia">Biografia</option>
-                <option value="autoajuda">Autoajuda</option>
-                <option value="educacional">Educacional</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <button type="submit" class="btn btn-primary w-100">
-                Buscar
-              </button>
-            </div>
-          </form>        </div>
-      </div>
+                <option value="ficcao" {% if request.GET.genero == 'ficcao' %}selected{% endif %}>Ficção</option>
+                <option value="nao-ficcao" {% if request.GET.genero == 'nao-ficcao' %}selected{% endif %}>Não-ficção</option>
+                <option value="tecnologia" {% if request.GET.genero == 'tecnologia' %}selected{% endif %}>Tecnologia</option>
+                <option value="biografia" {% if request.GET.genero == 'biografia' %}selected{% endif %}>Biografia</option>
+                <option value="historia" {% if request.GET.genero == 'historia' %}selected{% endif %}>História</option>
+                <option value="ciencia" {% if request.GET.genero == 'ciencia' %}selected{% endif %}>Ciência</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-undo me-2"></i>Limpar Filtros
+            </a>
+        </div>
+    </form>
+</div>
 
-      <!-- Books List -->
-      <div class="row">        {% if livros %}
-          {% for livro in livros %}
-            <div class="col-md-6 col-lg-4 mb-4">
-              <div class="card h-100">
-            <div class="card-body">
-              <h5 class="card-title">{{ livro.titulo }}</h5>
-              <p class="card-text">
-                <strong>Autor:</strong> {{ livro.autor.nome }}<br />
-                <strong>Gênero:</strong> {{ livro.get_genero_display }}<br />
-                <strong>Disponível:</strong>
-                {% if livro.quantidade_disponivel > 0 %}
-                <span class="badge bg-success"
-                  >{{ livro.quantidade_disponivel }} unidade{{
-                  livro.quantidade_disponivel|pluralize:"s" }}</span
-                >
-                {% else %}
-                <span class="badge bg-danger">Indisponível</span>
-                {% endif %}
-              </p>
-            </div>
-            <div class="card-footer">
-              <div class="d-grid gap-2">
-                <a
-                  href="{% url 'biblioteca:livro_detail' livro.pk %}"
-                  class="btn btn-outline-primary btn-sm"                  >Ver Detalhes</a
-                >
-                
-                {% if user.is_authenticated %}
-                  {% if livro.quantidade_disponivel > 0 %}
-                    <a
-                      href="{% url 'biblioteca:reservar_livro' livro.pk %}"
-                      class="btn btn-success btn-sm"
-                      >Reservar</a
-                    >
-                  {% endif %}
-                {% endif %}
-                
-                {% if user.is_authenticated and user.is_admin %}
-                <div class="btn-group" role="group">
-                  <a
-                    href="{% url 'biblioteca:livro_update' livro.pk %}"
-                    class="btn btn-warning btn-sm"
-                    >Editar</a
-                  >
-                  <a
-                    href="{% url 'biblioteca:livro_delete' livro.pk %}"
-                    class="btn btn-danger btn-sm"
-                    >Excluir</a
-                  >                </div>
-                {% endif %}
-              </div>
-            </div>
-          </div>
-        </div>
-        {% endfor %}
-      {% else %}
-        <div class="col-12">
-          <div class="alert alert-info text-center">
-            <h4>Nenhum livro encontrado</h4>
-            <p>
-              Não há livros cadastrados no sistema ou nenhum livro corresponde à
-              sua busca.
-            </p>
-            {% if user.is_authenticated and user.is_admin %}
-            <a
-              href="{% url 'biblioteca:livro_create' %}"
-              class="btn btn-primary"
-              >Adicionar Primeiro Livro</a
-            >
-            {% endif %}
-          </div>
-        </div>
+<!-- Results Summary -->
+{% if request.GET.q or request.GET.genero %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        {% if request.GET.q and request.GET.genero %}
+            Resultados para "{{ request.GET.q }}" no gênero "{{ request.GET.genero }}"
+        {% elif request.GET.q %}
+            Resultados para "{{ request.GET.q }}"
+        {% elif request.GET.genero %}
+            Filtrado por gênero: "{{ request.GET.genero }}"
         {% endif %}
-      </div>
+        <span class="badge bg-primary ms-2">{{ livros|length }} livro(s) encontrado(s)</span>
+    </div>
+{% endif %}
 
-      <!-- Pagination (if needed) -->
-      {% if is_paginated %}
-      <nav aria-label="Page navigation">
-        <ul class="pagination justify-content-center">
-          {% if page_obj.has_previous %}
-          <li class="page-item">
-            <a class="page-link" href="?page=1">Primeira</a>
-          </li>
-          <li class="page-item">
-            <a
-              class="page-link"
-              href="?page={{ page_obj.previous_page_number }}"
-              >Anterior</a
-            >
-          </li>
-          {% endif %}
+<!-- Books Grid -->
+{% if livros %}
+    <div class="row">
+        {% for livro in livros %}
+            <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+                <div class="card h-100 book-item {% if livro.disponivel %}book-available{% else %}book-unavailable{% endif %}">
+                    <div class="card-body d-flex flex-column">
+                        <div class="text-center mb-3">
+                            {% if livro.capa %}
+                                <img src="{{ livro.capa.url }}" 
+                                     alt="Capa de {{ livro.titulo }}" 
+                                     class="img-fluid rounded" 
+                                     style="max-height: 200px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                     style="height: 200px;">
+                                    <i class="fas fa-book fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <h5 class="card-title h6 mb-2">{{ livro.titulo|truncatechars:50 }}</h5>
+                        
+                        <p class="card-text text-muted small mb-2">
+                            <i class="fas fa-user me-1"></i>
+                            {{ livro.autor.nome|default:"Autor desconhecido" }}
+                        </p>
+                        
+                        {% if livro.genero %}
+                            <p class="card-text mb-2">
+                                <span class="badge bg-secondary">{{ livro.genero }}</span>
+                            </p>
+                        {% endif %}
+                        
+                        <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small text-muted">
+                                    <i class="fas fa-copy me-1"></i>
+                                    {{ livro.quantidade_copias|default:"1" }} cópia(s)
+                                </span>
+                                <span class="badge {% if livro.disponivel %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if livro.disponivel %}
+                                        <i class="fas fa-check me-1"></i>Disponível
+                                    {% else %}
+                                        <i class="fas fa-times me-1"></i>Indisponível
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'biblioteca:livro_detail' livro.pk %}" 
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                </a>
+                                
+                                {% if livro.disponivel and user.is_authenticated %}
+                                    <a href="{% url 'biblioteca:reservar_livro' livro.pk %}" 
+                                       class="btn btn-outline-warning btn-sm">
+                                        <i class="fas fa-bookmark me-1"></i>Reservar
+                                    </a>
+                                {% endif %}
+                                
+                                {% if user.is_authenticated and user.is_admin %}
+                                    <div class="btn-group btn-group-sm w-100">
+                                        <a href="{% url 'biblioteca:livro_update' livro.pk %}" 
+                                           class="btn btn-outline-info">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'biblioteca:livro_delete' livro.pk %}" 
+                                           class="btn btn-outline-danger"
+                                           onclick="return confirm('Tem certeza que deseja deletar este livro?')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 
-          <li class="page-item active">
-            <span class="page-link">
-              Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
-            </span>
-          </li>
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <nav aria-label="Navegação de páginas" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.genero %}&genero={{ request.GET.genero }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.genero %}&genero={{ request.GET.genero }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
 
-          {% if page_obj.has_next %}
-          <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}"
-              >Próxima</a
-            >
-          </li>
-          <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}"
-              >Última</a
-            >
-          </li>
-          {% endif %}
-        </ul>
-      </nav>
-      {% endif %}
-    </main>
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.genero %}&genero={{ request.GET.genero }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
 
-    <footer class="bg-light text-center py-3 mt-5">
-      <p class="mb-0">&copy; {% now "Y" %} Sistema de Biblioteca SENAC</p>
-    </footer>
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.genero %}&genero={{ request.GET.genero }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.genero %}&genero={{ request.GET.genero }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
-</html>
+{% else %}
+    <!-- No Results -->
+    <div class="text-center py-5">
+        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+        <h3 class="text-muted">Nenhum livro encontrado</h3>
+        <p class="text-muted mb-4">
+            {% if request.GET.q or request.GET.genero %}
+                Tente ajustar os filtros de busca ou 
+                <a href="{% url 'biblioteca:livro_list' %}">limpar os filtros</a>
+            {% else %}
+                Ainda não há livros cadastrados no sistema.
+            {% endif %}
+        </p>
+        {% if user.is_authenticated and user.is_admin %}
+            <a href="{% url 'biblioteca:livro_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Adicionar Primeiro Livro
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when genre filter changes
+    document.querySelector('select[name="genero"]').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    // Clear search when input is empty and user presses Enter
+    document.querySelector('input[name="q"]').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !this.value.trim()) {
+            e.preventDefault();
+            window.location.href = "{% url 'biblioteca:livro_list' %}";
+        }
+    });
+});
+</script>
+{% endblock %}

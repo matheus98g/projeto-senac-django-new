@@ -228,22 +228,47 @@ class ReservarLivroView(LoginRequiredMixin, CreateView):
 class CancelarReservaView(LoginRequiredMixin, UpdateView):
     model = Reserva
     fields = []
+    http_method_names = ['post']  # Apenas aceita POST
     
     def post(self, request, *args, **kwargs):
-        reserva = self.get_object()
-        if reserva.usuario != request.user and not request.user.is_admin():
-            messages.error(request, 'Você não tem permissão para cancelar esta reserva.')
+        try:
+            reserva = self.get_object()
+            
+            # Verificar permissões
+            if reserva.usuario != request.user and not request.user.is_admin():
+                messages.error(request, 'Você não tem permissão para cancelar esta reserva.')
+                return redirect('biblioteca:minhas_reservas')
+            
+            # Verificar se a reserva pode ser cancelada
+            if reserva.status != 'ativa':
+                messages.warning(request, f'Esta reserva não pode ser cancelada (status: {reserva.get_status_display()}).')
+                return redirect('biblioteca:minhas_reservas')
+            
+            # Cancelar a reserva
+            reserva.status = 'cancelada'
+            reserva.save()
+            
+            # Atualizar quantidade disponível do livro
+            livro = reserva.livro
+            if livro.quantidade_disponivel < livro.quantidade:
+                livro.quantidade_disponivel += 1
+                livro.save()
+            
+            # Log da ação
+            messages.success(request, f'Reserva do livro "{reserva.livro.titulo}" cancelada com sucesso!')
+            
+            # Redirecionar baseado no usuário
+            if request.user.is_admin():
+                return redirect('biblioteca:admin_dashboard')
+            else:
+                return redirect('biblioteca:minhas_reservas')
+                
+        except Reserva.DoesNotExist:
+            messages.error(request, 'Reserva não encontrada.')
             return redirect('biblioteca:minhas_reservas')
-        
-        reserva.status = 'cancelada'
-        reserva.save()
-        
-        # Aumentar quantidade disponível
-        reserva.livro.quantidade_disponivel += 1
-        reserva.livro.save()
-        
-        messages.success(request, 'Reserva cancelada com sucesso!')
-        return redirect('biblioteca:minhas_reservas')
+        except Exception as e:
+            messages.error(request, f'Erro ao cancelar reserva: {str(e)}')
+            return redirect('biblioteca:minhas_reservas')
 
 class ReservaDetailView(DetailView):
     model = Reserva

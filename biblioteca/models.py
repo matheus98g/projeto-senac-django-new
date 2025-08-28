@@ -47,6 +47,19 @@ class Usuario(AbstractUser):
         reservas_ativas = self.reservas.filter(status='ativa').count()
         return reservas_ativas < 3
     
+    def get_active_reservations(self):
+        return self.reservas.filter(status='ativa').count()
+    
+    def get_active_loans(self):
+        return self.emprestimos.filter(status='ativo').count()
+    
+    def get_total_reservations(self):
+        return self.reservas.count()
+    
+    def get_total_loans(self):
+        return self.emprestimos.count()
+
+
 class Autor(models.Model):
     nome = models.CharField(max_length=100, verbose_name='Nome do Autor')
     data_cadastro = models.DateTimeField(
@@ -137,6 +150,12 @@ class Livro(models.Model):
     
     def get_total_loans(self):
         return self.emprestimos.count()
+    
+    def get_active_reservations(self):
+        return self.reservas.filter(status='ativa').count()
+    
+    def get_active_loans(self):
+        return self.emprestimos.filter(status='ativo').count()
     
     def delete(self, *args, **kwargs):
         if self.reservas.filter(status='ativa').exists():

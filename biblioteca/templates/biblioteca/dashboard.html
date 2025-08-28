@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Cabeçalho da página -->
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-tachometer-alt text-primary me-2"></i>
+                    Dashboard
+                </h1>
+                <p class="text-muted mb-0">Bem-vindo ao Sistema de Biblioteca SENAC</p>
+            </div>
+            <div class="text-end">
+                <p class="text-muted mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    {% now "d/m/Y" %}
+                </p>
+                <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i>
+                    {% now "H:i" %}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Total de Livros</h5>
+                    <h2>{{ stats.total_livros|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-books fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #198754, #146c43);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Usuários Ativos</h5>
+                    <h2>{{ stats.total_usuarios|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #0dcaf0, #0aa2c0);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Empréstimos Ativos</h5>
+                    <h2>{{ stats.emprestimos_ativos|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #ffc107, #e0a800);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Empréstimos Atrasados</h5>
+                    <h2>{{ stats.emprestimos_atrasados|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="fas fa-bolt text-warning me-2"></i>
+            Ações Rápidas
+        </h4>
+        <div class="quick-actions">
+            <a href="{% url 'biblioteca:livro_list' %}" class="quick-action">
+                <div class="text-center">
+                    <i class="fas fa-search fa-2x text-primary mb-2"></i>
+                    <h6>Buscar Livros</h6>
+                    <small class="text-muted">Encontre livros disponíveis</small>
+                </div>
+            </a>
+            
+            <a href="{% url 'biblioteca:minhas_reservas' %}" class="quick-action">
+                <div class="text-center">
+                    <i class="fas fa-bookmark fa-2x text-success mb-2"></i>
+                    <h6>Minhas Reservas</h6>
+                    <small class="text-muted">Gerencie suas reservas</small>
+                </div>
+            </a>
+            
+            {% if user.is_admin %}
+            <a href="{% url 'biblioteca:admin_dashboard' %}" class="quick-action">
+                <div class="text-center">
+                    <i class="fas fa-cog fa-2x text-info mb-2"></i>
+                    <h6>Painel Admin</h6>
+                    <small class="text-muted">Gerenciar sistema</small>
+                </div>
+            </a>
+            
+            <a href="{% url 'biblioteca:emprestimo_create' %}" class="quick-action">
+                <div class="text-center">
+                    <i class="fas fa-plus fa-2x text-warning mb-2"></i>
+                    <h6>Novo Empréstimo</h6>
+                    <small class="text-muted">Registrar empréstimo</small>
+                </div>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Livros Mais Populares -->
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Livros Mais Populares
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if livros_populares %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Posição</th>
+                                    <th>Livro</th>
+                                    <th>Autor</th>
+                                    <th>Empréstimos</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for livro in livros_populares %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-primary">{{ forloop.counter }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ livro.titulo }}</strong>
+                                    </td>
+                                    <td>{{ livro.autor.nome }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ livro.total_emprestimos }}</span>
+                                    </td>
+                                    <td>
+                                        {% if livro.is_available %}
+                                            <span class="badge bg-success">Disponível</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Indisponível</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhum livro emprestado ainda.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar com Informações Adicionais -->
+    <div class="col-lg-4 mb-4">
+        <!-- Status do Sistema -->
+        <div class="card mb-3">
+            <div class="card-header bg-success text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Status do Sistema
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Livros disponíveis</span>
+                    <span class="badge bg-success">{{ stats.total_livros|default:0 }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Usuários online</span>
+                    <span class="badge bg-info">{{ stats.total_usuarios|default:0 }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>Sistema</span>
+                    <span class="badge bg-success">Online</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Últimas Atividades -->
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Atividades Recentes
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center py-3">
+                    <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                    <p class="text-muted small">Nenhuma atividade recente</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alertas e Notificações -->
+{% if stats.emprestimos_atrasados > 0 %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Atenção!</strong> Existem {{ stats.emprestimos_atrasados }} empréstimos em atraso.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Atualizar horário em tempo real
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('pt-BR', { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+    });
+    const dateString = now.toLocaleDateString('pt-BR');
+    
+    // Atualizar elementos de tempo (se existirem)
+    const timeElements = document.querySelectorAll('.current-time');
+    timeElements.forEach(el => el.textContent = timeString);
+    
+    const dateElements = document.querySelectorAll('.current-date');
+    dateElements.forEach(el => el.textContent = dateString);
+}
+
+// Atualizar a cada minuto
+setInterval(updateTime, 60000);
+updateTime(); // Executar imediatamente
+</script>
+{% endblock %}

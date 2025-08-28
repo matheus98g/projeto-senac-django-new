@@ -1,0 +1,423 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ livro.titulo }} - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:dashboard' %}">
+                <i class="fas fa-home me-1"></i>Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:livro_list' %}">
+                <i class="fas fa-books me-1"></i>Livros
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">{{ livro.titulo|truncatechars:30 }}</li>
+    </ol>
+</nav>
+
+<!-- Book Details Header -->
+<div class="row mb-4">
+    <div class="col-md-4 mb-3">
+        <!-- Book Cover -->
+        <div class="card">
+            <div class="card-body text-center p-4">
+                {% if livro.capa %}
+                    <img src="{{ livro.capa.url }}" 
+                         alt="Capa de {{ livro.titulo }}" 
+                         class="img-fluid rounded shadow-sm" 
+                         style="max-height: 300px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-light rounded d-flex align-items-center justify-content-center shadow-sm" 
+                         style="height: 300px;">
+                        <i class="fas fa-book fa-5x text-muted"></i>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Book Information -->
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="h2 mb-2">{{ livro.titulo }}</h1>
+                        <p class="text-muted mb-2">
+                            <i class="fas fa-user me-2"></i>
+                            <strong>Autor:</strong> {{ livro.autor.nome }}
+                        </p>
+                        <p class="mb-2">
+                            <span class="badge bg-secondary fs-6">{{ livro.get_genero_display }}</span>
+                        </p>
+                    </div>
+                    
+                    <!-- Status Badge -->
+                    <div class="text-end">
+                        {% if livro.is_available %}
+                            <span class="badge bg-success fs-6 px-3 py-2">
+                                <i class="fas fa-check me-1"></i>Disponível
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger fs-6 px-3 py-2">
+                                <i class="fas fa-times me-1"></i>Indisponível
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="row mb-4">
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="text-center p-2 bg-light rounded">
+                            <div class="h5 mb-1 text-primary">{{ livro.quantidade }}</div>
+                            <small class="text-muted">Total</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="text-center p-2 bg-light rounded">
+                            <div class="h5 mb-1 text-success">{{ livro.quantidade_disponivel }}</div>
+                            <small class="text-muted">Disponível</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="text-center p-2 bg-light rounded">
+                            <div class="h5 mb-1 text-info">{{ livro.get_active_loans }}</div>
+                            <small class="text-muted">Empréstimos Ativos</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3 mb-2">
+                        <div class="text-center p-2 bg-light rounded">
+                            <div class="h5 mb-1 text-warning">{{ livro.get_active_reservations }}</div>
+                            <small class="text-muted">Reservas Ativas</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2 d-md-flex">
+                    {% if livro.is_available and user.is_authenticated %}
+                        <a href="{% url 'biblioteca:reservar_livro' livro.pk %}" 
+                           class="btn btn-warning btn-lg flex-fill">
+                            <i class="fas fa-bookmark me-2"></i>Reservar Livro
+                        </a>
+                        
+                        {% if user.is_admin %}
+                            <a href="{% url 'biblioteca:emprestimo_create' %}?livro={{ livro.pk }}" 
+                               class="btn btn-success btn-lg flex-fill">
+                                <i class="fas fa-exchange-alt me-2"></i>Emprestar
+                            </a>
+                        {% endif %}
+                    {% elif not livro.is_available %}
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Este livro não está disponível no momento. 
+                            {% if user.is_authenticated %}
+                                Você pode fazer uma reserva para quando ele estiver disponível.
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if not user.is_authenticated %}
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <a href="{% url 'biblioteca:login' %}">Faça login</a> para reservar ou emprestar este livro.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Information Tabs -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="bookTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab">
+                            <i class="fas fa-info-circle me-2"></i>Detalhes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="author-tab" data-bs-toggle="tab" data-bs-target="#author" type="button" role="tab">
+                            <i class="fas fa-user me-2"></i>Sobre o Autor
+                        </button>
+                    </li>
+                    {% if user.is_admin %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
+                            <i class="fas fa-history me-2"></i>Histórico
+                        </button>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <div class="card-body">
+                <div class="tab-content" id="bookTabsContent">
+                    <!-- Details Tab -->
+                    <div class="tab-pane fade show active" id="details" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Informações do Livro</h5>
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="fw-bold">Título:</td>
+                                        <td>{{ livro.titulo }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Autor:</td>
+                                        <td>{{ livro.autor.nome }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Gênero:</td>
+                                        <td>{{ livro.get_genero_display }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Quantidade Total:</td>
+                                        <td>{{ livro.quantidade }} exemplar(es)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Disponível:</td>
+                                        <td>{{ livro.quantidade_disponivel }} exemplar(es)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Data de Cadastro:</td>
+                                        <td>{{ livro.data_cadastro|date:"d/m/Y H:i" }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5 class="mb-3">Estatísticas</h5>
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <div class="text-center p-3 bg-primary text-white rounded">
+                                            <div class="h4 mb-1">{{ livro.get_total_loans }}</div>
+                                            <small>Total de Empréstimos</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <div class="text-center p-3 bg-success text-white rounded">
+                                            <div class="h4 mb-1">{{ livro.get_active_reservations }}</div>
+                                            <small>Reservas Ativas</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Availability Status -->
+                                <div class="mt-3">
+                                    <h6>Status de Disponibilidade</h6>
+                                    {% if livro.is_available %}
+                                        <div class="alert alert-success mb-0">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Este livro está disponível para empréstimo ou reserva.
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-danger mb-0">
+                                            <i class="fas fa-times-circle me-2"></i>
+                                            Este livro não está disponível no momento.
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Author Tab -->
+                    <div class="tab-pane fade" id="author" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-3 text-center mb-3">
+                                <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" 
+                                     style="width: 120px; height: 120px;">
+                                    <i class="fas fa-user fa-3x text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <h5>{{ livro.autor.nome }}</h5>
+                                <p class="text-muted mb-3">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    Cadastrado em {{ livro.autor.data_cadastro|date:"d/m/Y" }}
+                                </p>
+                                
+                                <h6>Outros livros deste autor:</h6>
+                                {% with outros_livros=livro.autor.livros.all %}
+                                    {% if outros_livros|length > 1 %}
+                                        <div class="row">
+                                            {% for outro_livro in outros_livros %}
+                                                {% if outro_livro != livro %}
+                                                    <div class="col-md-6 mb-2">
+                                                        <a href="{% url 'biblioteca:livro_detail' outro_livro.pk %}" 
+                                                           class="text-decoration-none">
+                                                            <div class="p-2 border rounded">
+                                                                <i class="fas fa-book me-2 text-primary"></i>
+                                                                {{ outro_livro.titulo }}
+                                                            </div>
+                                                        </a>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted">Este é o único livro deste autor no acervo.</p>
+                                    {% endif %}
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- History Tab (Admin Only) -->
+                    {% if user.is_admin %}
+                    <div class="tab-pane fade" id="history" role="tabpanel">
+                        <h5 class="mb-3">Histórico de Empréstimos</h5>
+                        
+                        {% with emprestimos=livro.emprestimos.all %}
+                            {% if emprestimos %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Usuário</th>
+                                                <th>Data Empréstimo</th>
+                                                <th>Data Devolução Prevista</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for emprestimo in emprestimos %}
+                                            <tr>
+                                                <td>{{ emprestimo.usuario.get_full_name|default:emprestimo.usuario.username }}</td>
+                                                <td>{{ emprestimo.data_emprestimo|date:"d/m/Y" }}</td>
+                                                <td>{{ emprestimo.data_devolucao_prevista|date:"d/m/Y" }}</td>
+                                                <td>
+                                                    {% if emprestimo.status == 'ativo' %}
+                                                        <span class="badge bg-primary">Ativo</span>
+                                                    {% elif emprestimo.status == 'devolvido' %}
+                                                        <span class="badge bg-success">Devolvido</span>
+                                                    {% elif emprestimo.status == 'atrasado' %}
+                                                        <span class="badge bg-danger">Atrasado</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if emprestimo.status == 'ativo' %}
+                                                        <button class="btn btn-sm btn-outline-success me-1" 
+                                                                onclick="renovarEmprestimo({{ emprestimo.pk }})">
+                                                            <i class="fas fa-redo"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-primary" 
+                                                                onclick="devolverLivro({{ emprestimo.pk }})">
+                                                            <i class="fas fa-undo"></i>
+                                                        </button>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Nenhum empréstimo registrado para este livro.</p>
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Actions -->
+{% if user.is_admin %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-cog me-2"></i>Ações Administrativas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="{% url 'biblioteca:livro_update' livro.pk %}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>Editar Livro
+                    </a>
+                    <a href="{% url 'biblioteca:emprestimo_create' %}?livro={{ livro.pk }}" class="btn btn-outline-success">
+                        <i class="fas fa-plus me-2"></i>Novo Empréstimo
+                    </a>
+                    <button class="btn btn-outline-danger" 
+                            onclick="if(confirm('Tem certeza que deseja excluir este livro?')) window.location.href='{% url 'biblioteca:livro_delete' livro.pk %}'">
+                        <i class="fas fa-trash me-2"></i>Excluir Livro
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Função para renovar empréstimo
+function renovarEmprestimo(emprestimoId) {
+    if (confirm('Deseja renovar este empréstimo?')) {
+        fetch(`/biblioteca/emprestimo/${emprestimoId}/renovar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Erro ao renovar empréstimo');
+            }
+        });
+    }
+}
+
+// Função para devolver livro
+function devolverLivro(emprestimoId) {
+    if (confirm('Deseja marcar este livro como devolvido?')) {
+        fetch(`/biblioteca/emprestimo/${emprestimoId}/devolver/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Erro ao devolver livro');
+            }
+        });
+    }
+}
+
+// Ativar tooltips do Bootstrap
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

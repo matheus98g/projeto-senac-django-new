@@ -33,49 +33,144 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     {% if user.is_authenticated %}
+                        <!-- Dashboard -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'biblioteca:dashboard' %}">
                                 <i class="fas fa-tachometer-alt me-1"></i>Dashboard
                             </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'biblioteca:livro_list' %}">
-                                <i class="fas fa-books me-1"></i>Livros
+                        
+                        <!-- Catálogo Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="catalogoDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-books me-1"></i>Catálogo
                             </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'biblioteca:livro_list' %}">
+                                        <i class="fas fa-book me-2"></i>Livros
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'biblioteca:autor_list' %}">
+                                        <i class="fas fa-user-edit me-2"></i>Autores
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'biblioteca:categoria_list' %}">
+                                        <i class="fas fa-tags me-2"></i>Categorias
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-users me-1"></i>Usuários
+                        
+                        <!-- Serviços Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="servicosDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-handshake me-1"></i>Serviços
                             </a>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'biblioteca:emprestimo_list' %}">
+                                        <i class="fas fa-exchange-alt me-2"></i>Meus Empréstimos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'biblioteca:minhas_reservas' %}">
+                                        <i class="fas fa-bookmark me-2"></i>Minhas Reservas
+                                    </a>
+                                </li>
+                            </ul>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-exchange-alt me-1"></i>Empréstimos
-                            </a>
-                        </li>
+                        
+                        <!-- Menu Administrativo -->
+                        {% if user.is_admin %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog me-1"></i>Administração
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'biblioteca:admin_dashboard' %}">
+                                            <i class="fas fa-chart-line me-2"></i>Painel Admin
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'biblioteca:usuario_list' %}">
+                                            <i class="fas fa-users me-2"></i>Gerenciar Usuários
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'biblioteca:emprestimo_create' %}">
+                                            <i class="fas fa-plus me-2"></i>Novo Empréstimo
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'biblioteca:livro_create' %}">
+                                            <i class="fas fa-book-plus me-2"></i>Adicionar Livro
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'biblioteca:autor_create' %}">
+                                            <i class="fas fa-user-plus me-2"></i>Adicionar Autor
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'biblioteca:categoria_create' %}">
+                                            <i class="fas fa-tag me-2"></i>Adicionar Categoria
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'biblioteca:relatorios' %}">
+                                            <i class="fas fa-chart-bar me-2"></i>Relatórios
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        {% endif %}
                     {% endif %}
                 </ul>
                 
                 <ul class="navbar-nav">
                     {% if user.is_authenticated %}
+                        <!-- Menu do Usuário -->
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                                 <div class="user-avatar d-inline-block me-2">
                                     {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
                                 </div>
                                 {{ user.get_full_name|default:user.username }}
+                                {% if user.is_admin %}
+                                    <span class="badge bg-warning ms-1">Admin</span>
+                                {% endif %}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configurações</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'biblioteca:profile' %}">
+                                        <i class="fas fa-user me-2"></i>Meu Perfil
+                                    </a>
+                                </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'biblioteca:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Sair</a></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'biblioteca:logout' %}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Sair
+                                    </a>
+                                </li>
                             </ul>
                         </li>
                     {% else %}
+                        <!-- Menu para usuários não autenticados -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'biblioteca:login' %}">
                                 <i class="fas fa-sign-in-alt me-1"></i>Entrar
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'biblioteca:register' %}">
+                                <i class="fas fa-user-plus me-1"></i>Cadastrar
                             </a>
                         </li>
                     {% endif %}

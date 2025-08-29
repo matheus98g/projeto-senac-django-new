@@ -1,0 +1,606 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gerenciar Usuários - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:dashboard' %}">
+                <i class="fas fa-home me-1"></i>Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:admin_dashboard' %}">
+                <i class="fas fa-cog me-1"></i>Painel Admin
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Usuários</li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-users text-primary me-2"></i>
+                    Gerenciar Usuários
+                </h1>
+                <p class="text-muted mb-0">Controle de usuários e permissões do sistema</p>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="d-flex gap-2">
+                <a href="{% url 'biblioteca:admin_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-user-plus me-2"></i>Novo Usuário
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Summary -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Total de Usuários</h5>
+                    <h2>{{ total_usuarios|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #198754, #146c43);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Usuários Ativos</h5>
+                    <h2>{{ usuarios_ativos|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #0dcaf0, #0aa2c0);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Administradores</h5>
+                    <h2>{{ usuarios_admin|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-user-shield fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #ffc107, #e0a800);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Novos este Mês</h5>
+                    <h2>{{ novos_usuarios_mes|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-calendar-plus fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Form -->
+<div class="search-form mb-4">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" 
+                       class="form-control" 
+                       name="search" 
+                       value="{{ request.GET.search }}" 
+                       placeholder="Buscar por nome, usuário ou email...">
+                <button type="submit" class="btn btn-outline-primary">Buscar</button>
+            </div>
+        </div>
+        
+        <div class="col-md-2">
+            <select name="tipo_usuario" class="form-select">
+                <option value="">Todos os tipos</option>
+                <option value="aluno" {% if request.GET.tipo_usuario == 'aluno' %}selected{% endif %}>Aluno</option>
+                <option value="admin" {% if request.GET.tipo_usuario == 'admin' %}selected{% endif %}>Administrador</option>
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">Todos os status</option>
+                <option value="ativo" {% if request.GET.status == 'ativo' %}selected{% endif %}>Ativo</option>
+                <option value="inativo" {% if request.GET.status == 'inativo' %}selected{% endif %}>Inativo</option>
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <select name="ordenar" class="form-select">
+                <option value="">Ordenar por</option>
+                <option value="nome" {% if request.GET.ordenar == 'nome' %}selected{% endif %}>Nome</option>
+                <option value="data_cadastro" {% if request.GET.ordenar == 'data_cadastro' %}selected{% endif %}>Data Cadastro</option>
+                <option value="ultimo_acesso" {% if request.GET.ordenar == 'ultimo_acesso' %}selected{% endif %}>Último Acesso</option>
+            </select>
+        </div>
+        
+        <div class="col-md-2">
+            <a href="{% url 'biblioteca:usuario_list' %}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-undo me-2"></i>Limpar
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Results Summary -->
+{% if request.GET.search or request.GET.tipo_usuario or request.GET.status %}
+    <div class="alert alert-info mb-4">
+        <i class="fas fa-info-circle me-2"></i>
+        <strong>Filtros Aplicados:</strong>
+        {% if request.GET.search %}Busca: "{{ request.GET.search }}"{% endif %}
+        {% if request.GET.tipo_usuario %} | Tipo: {{ request.GET.tipo_usuario|title }}{% endif %}
+        {% if request.GET.status %} | Status: {{ request.GET.status|title }}{% endif %}
+        <span class="badge bg-primary ms-2">{{ usuarios|length }} usuário(s) encontrado(s)</span>
+    </div>
+{% endif %}
+
+<!-- Users Table -->
+{% if usuarios %}
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                Lista de Usuários ({{ usuarios|length }})
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Nome Completo</th>
+                            <th>Email</th>
+                            <th>Tipo</th>
+                            <th>Status</th>
+                            <th>Último Acesso</th>
+                            <th>Estatísticas</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <!-- User Avatar and Username -->
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-3" style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                        {{ usuario.first_name|first|upper }}{{ usuario.last_name|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ usuario.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">ID: {{ usuario.id }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <!-- Full Name -->
+                            <td>
+                                {% if usuario.first_name or usuario.last_name %}
+                                    {{ usuario.get_full_name }}
+                                {% else %}
+                                    <span class="text-muted">Não informado</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Email -->
+                            <td>
+                                <a href="mailto:{{ usuario.email }}" class="text-decoration-none">
+                                    {{ usuario.email }}
+                                </a>
+                            </td>
+                            
+                            <!-- User Type -->
+                            <td>
+                                {% if usuario.tipo_usuario == 'admin' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-user-shield me-1"></i>Admin
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-user me-1"></i>Aluno
+                                    </span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Status -->
+                            <td>
+                                {% if usuario.is_active %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>Ativo
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times me-1"></i>Inativo
+                                    </span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Last Login -->
+                            <td>
+                                {% if usuario.last_login %}
+                                    <small>
+                                        {{ usuario.last_login|date:"d/m/Y" }}
+                                        <br>
+                                        <span class="text-muted">{{ usuario.last_login|date:"H:i" }}</span>
+                                    </small>
+                                {% else %}
+                                    <span class="text-muted">Nunca</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Statistics -->
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <small>
+                                        <i class="fas fa-book me-1 text-primary"></i>
+                                        {{ usuario.emprestimos_count|default:0 }} empréstimos
+                                    </small>
+                                    <small>
+                                        <i class="fas fa-bookmark me-1 text-warning"></i>
+                                        {{ usuario.reservas_count|default:0 }} reservas
+                                    </small>
+                                    {% if usuario.pendencias_count > 0 %}
+                                        <small class="text-danger">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            {{ usuario.pendencias_count }} pendências
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            
+                            <!-- Actions -->
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'biblioteca:usuario_detail' usuario.pk %}" 
+                                       class="btn btn-outline-primary" 
+                                       title="Ver Detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    <a href="{% url 'biblioteca:usuario_update' usuario.pk %}" 
+                                       class="btn btn-outline-info" 
+                                       title="Editar Usuário">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    
+                                    {% if usuario.is_active %}
+                                        <button class="btn btn-outline-warning" 
+                                                onclick="toggleUserStatus({{ usuario.pk }}, '{{ usuario.username }}', false)"
+                                                title="Desativar Usuário">
+                                            <i class="fas fa-user-slash"></i>
+                                        </button>
+                                    {% else %}
+                                        <button class="btn btn-outline-success" 
+                                                onclick="toggleUserStatus({{ usuario.pk }}, '{{ usuario.username }}', true)"
+                                                title="Ativar Usuário">
+                                            <i class="fas fa-user-check"></i>
+                                        </button>
+                                    {% endif %}
+                                    
+                                    {% if not usuario.is_admin %}
+                                        <button class="btn btn-outline-danger" 
+                                                onclick="deleteUser({{ usuario.pk }}, '{{ usuario.username }}')"
+                                                title="Excluir Usuário">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <nav aria-label="Navegação de páginas" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.ordenar %}&ordenar={{ request.GET.ordenar }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+{% else %}
+    <!-- No Results -->
+    <div class="text-center py-5">
+        <i class="fas fa-users fa-4x text-muted mb-3"></i>
+        <h3 class="text-muted">Nenhum usuário encontrado</h3>
+        <p class="text-muted mb-4">
+            {% if request.GET.search or request.GET.tipo_usuario or request.GET.status %}
+                Tente ajustar os filtros de busca ou 
+                <a href="{% url 'biblioteca:usuario_list' %}">limpar os filtros</a>
+            {% else %}
+                Ainda não há usuários cadastrados no sistema.
+            {% endif %}
+        </p>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+            <i class="fas fa-user-plus me-2"></i>Adicionar Primeiro Usuário
+        </button>
+    </div>
+{% endif %}
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Adicionar Novo Usuário
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="username" class="form-label">Nome de Usuário *</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="firstName" class="form-label">Nome</label>
+                            <input type="text" class="form-control" id="firstName">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="lastName" class="form-label">Sobrenome</label>
+                            <input type="text" class="form-control" id="lastName">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="userType" class="form-label">Tipo de Usuário *</label>
+                            <select class="form-select" id="userType" required>
+                                <option value="">Selecione...</option>
+                                <option value="aluno">Aluno</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">Senha *</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="isActive" checked>
+                        <label class="form-check-label" for="isActive">
+                            Usuário ativo
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="addNewUser()">Adicionar Usuário</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Card styling */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-1px);
+}
+
+/* User avatar styling */
+.user-avatar {
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+/* Table styling */
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Badge styling */
+.badge {
+    font-size: 0.75rem;
+}
+
+/* Button group styling */
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.125rem 0.25rem;
+        font-size: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Function to toggle user status
+function toggleUserStatus(userId, username, activate) {
+    const action = activate ? 'ativar' : 'desativar';
+    const message = activate ? 
+        `Tem certeza que deseja ativar o usuário "${username}"?` :
+        `Tem certeza que deseja desativar o usuário "${username}"?`;
+    
+    if (confirm(message)) {
+        // Here you would typically make an AJAX call to toggle user status
+        // For now, we'll show a message
+        alert(`Funcionalidade de ${action} usuário será implementada em breve!`);
+    }
+}
+
+// Function to delete user
+function deleteUser(userId, username) {
+    if (confirm(`ATENÇÃO: Tem certeza que deseja excluir o usuário "${username}"? Esta ação é irreversível!`)) {
+        if (confirm(`CONFIRMAÇÃO FINAL: Você realmente deseja excluir "${username}"?`)) {
+            // Here you would typically make an AJAX call to delete user
+            // For now, we'll show a message
+            alert('Funcionalidade de exclusão de usuário será implementada em breve!');
+        }
+    }
+}
+
+// Function to add new user
+function addNewUser() {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const userType = document.getElementById('userType').value;
+    const password = document.getElementById('password').value;
+    
+    if (!username || !email || !userType || !password) {
+        alert('Por favor, preencha todos os campos obrigatórios.');
+        return;
+    }
+    
+    if (password.length < 6) {
+        alert('A senha deve ter pelo menos 6 caracteres.');
+        return;
+    }
+    
+    // Here you would typically make an AJAX call to create the user
+    // For now, we'll show a message
+    alert('Funcionalidade de criação de usuário será implementada em breve!');
+    
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addUserModal'));
+    modal.hide();
+}
+
+// Auto-submit form when filters change
+document.addEventListener('DOMContentLoaded', function() {
+    const filters = document.querySelectorAll('select[name="tipo_usuario"], select[name="status"], select[name="ordenar"]');
+    filters.forEach(filter => {
+        filter.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+    
+    // Clear search when input is empty and user presses Enter
+    const searchInput = document.querySelector('input[name="search"]');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !this.value.trim()) {
+                e.preventDefault();
+                window.location.href = "{% url 'biblioteca:usuario_list' %}";
+            }
+        });
+    }
+});
+
+// Auto-hide alerts
+setTimeout(function() {
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(function(alert) {
+        if (alert.classList.contains('alert-info')) {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }
+    });
+}, 10000);
+</script>
+{% endblock %}

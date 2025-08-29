@@ -266,6 +266,59 @@ footer {
   color: var(--warning-color);
 }
 
+/* Enhanced alert styles */
+.alert {
+  border: none;
+  border-radius: 8px;
+  border-left: 4px solid transparent;
+}
+
+.alert-info {
+  border-left-color: var(--info-color);
+  background-color: rgba(13, 202, 240, 0.1);
+}
+
+.alert-warning {
+  border-left-color: var(--warning-color);
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.alert-danger {
+  border-left-color: var(--danger-color);
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.alert-success {
+  border-left-color: var(--success-color);
+  background-color: rgba(25, 135, 84, 0.1);
+}
+
+/* Badge enhancements */
+.badge {
+  border-radius: 6px;
+  font-weight: 500;
+  padding: 0.5rem 0.75rem;
+}
+
+.badge.fs-6 {
+  font-size: 0.875rem !important;
+}
+
+/* Enhanced button states */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn .fa-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* Print styles */
 @media print {
   .navbar,

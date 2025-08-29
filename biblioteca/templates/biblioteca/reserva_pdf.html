@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Reservas - Sistema de Biblioteca SENAC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #0d6efd;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #0d6efd;
+            margin: 0;
+        }
+        .header p {
+            color: #6c757d;
+            margin: 5px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .status-ativa { color: #198754; }
+        .status-cancelada { color: #dc3545; }
+        .status-expirada { color: #ffc107; }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 12px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0d6efd;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Sistema de Biblioteca SENAC</h1>
+        <p>Relatório de Reservas</p>
+        <p>Data de Exportação: {{ data_exportacao|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-number">{{ reservas|length }}</div>
+            <div class="stat-label">Total de Reservas</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">{{ reservas|dictsort:"status"|length }}</div>
+            <div class="stat-label">Reservas Ativas</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">{{ reservas|dictsort:"status"|length }}</div>
+            <div class="stat-label">Reservas Expiradas</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">{{ reservas|dictsort:"status"|length }}</div>
+            <div class="stat-label">Reservas Canceladas</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Usuário</th>
+                <th>Email</th>
+                <th>Tipo</th>
+                <th>Livro</th>
+                <th>Autor</th>
+                <th>Status</th>
+                <th>Data Reserva</th>
+                <th>Data Expiração</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reserva in reservas %}
+            <tr>
+                <td>{{ reserva.id }}</td>
+                <td>{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</td>
+                <td>{{ reserva.usuario.email }}</td>
+                <td>{{ reserva.usuario.get_tipo_usuario_display }}</td>
+                <td>{{ reserva.livro.titulo }}</td>
+                <td>{{ reserva.livro.autor.nome }}</td>
+                <td class="status-{{ reserva.status }}">
+                    {% if reserva.status == 'ativa' %}
+                        Ativa
+                    {% elif reserva.status == 'cancelada' %}
+                        Cancelada
+                    {% elif reserva.status == 'expirada' %}
+                        Expirada
+                    {% endif %}
+                </td>
+                <td>{{ reserva.data_reserva|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if reserva.data_expiracao %}
+                        {{ reserva.data_expiracao|date:"d/m/Y H:i" }}
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Este relatório foi gerado automaticamente pelo Sistema de Biblioteca SENAC</p>
+        <p>© {% now "Y" %} Sistema de Biblioteca SENAC. Todos os direitos reservados.</p>
+    </div>
+</body>
+</html>

@@ -56,6 +56,8 @@ urlpatterns = [
     path('reservas/minhas/', views.MinhasReservasView.as_view(), name='minhas_reservas'),
     path('livros/<int:livro_id>/reservar/', views.ReservarLivroView.as_view(), name='reservar_livro'),
     path('reservas/<int:pk>/cancelar/', views.CancelarReservaView.as_view(), name='cancelar_reserva'),
+    path('reservas/<int:pk>/deletar/', views.DeletarReservaView.as_view(), name='deletar_reserva'),
+    path('reservas/exportar/', views.ExportarReservasView.as_view(), name='exportar_reservas'),
     
     # URLs para empréstimos
     path('emprestimos/', views.EmprestimoListView.as_view(), name='emprestimo_list'),

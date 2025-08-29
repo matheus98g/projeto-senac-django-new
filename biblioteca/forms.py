@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import get_user_model
-from .models import Livro, Autor, Categoria, Emprestimo, Reserva
+from .models import Livro, Autor, Categoria, Emprestimo, Reserva, Usuario
 
 User = get_user_model()
 
@@ -105,6 +105,53 @@ class EmprestimoForm(forms.ModelForm):
             'usuario': forms.Select(attrs={'class': 'form-control'}),
             'livro': forms.Select(attrs={'class': 'form-control'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filtrar apenas livros disponíveis
+        self.fields['livro'].queryset = Livro.objects.filter(quantidade_disponivel__gt=0)
+        # Filtrar apenas usuários ativos
+        self.fields['usuario'].queryset = Usuario.objects.filter(is_active=True)
+        # Adicionar placeholders
+        self.fields['usuario'].empty_label = "Selecione um usuário"
+        self.fields['livro'].empty_label = "Selecione um livro"
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        usuario = cleaned_data.get('usuario')
+        livro = cleaned_data.get('livro')
+        
+        if usuario and livro:
+            # Verificar se o usuário já tem empréstimo ativo do mesmo livro
+            emprestimo_ativo = Emprestimo.objects.filter(
+                usuario=usuario,
+                livro=livro,
+                status='ativo'
+            ).exists()
+            
+            if emprestimo_ativo:
+                raise forms.ValidationError(
+                    'Este usuário já possui um empréstimo ativo deste livro.'
+                )
+            
+            # Verificar se o livro está disponível
+            if livro.quantidade_disponivel <= 0:
+                raise forms.ValidationError(
+                    'Este livro não está disponível para empréstimo.'
+                )
+            
+            # Verificar se o usuário pode fazer mais empréstimos
+            emprestimos_ativos = Emprestimo.objects.filter(
+                usuario=usuario,
+                status='ativo'
+            ).count()
+            
+            if emprestimos_ativos >= 3:
+                raise forms.ValidationError(
+                    'Este usuário já atingiu o limite máximo de 3 empréstimos ativos.'
+                )
+        
+        return cleaned_data
 
 
 class ReservaForm(forms.ModelForm):

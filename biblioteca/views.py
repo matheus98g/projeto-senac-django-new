@@ -8,6 +8,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Q
 from django.urls import reverse_lazy
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 from .forms import LoginForm, RegisterForm, LivroForm, AutorForm, CategoriaForm, EmprestimoForm, ReservaForm
 from .models import Livro, Autor, Categoria, Emprestimo, Reserva, Usuario
 import datetime
@@ -119,10 +120,6 @@ class LivroDeleteView(AdminRequiredMixin, DeleteView):
     model = Livro
     template_name = 'biblioteca/livro_confirm_delete.html'
     success_url = reverse_lazy('biblioteca:livro_list')
-    
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Livro excluído com sucesso!')
-        return super().delete(request, *args, **kwargs)
 
 # Autor views
 class AutorListView(ListView):
@@ -169,6 +166,55 @@ class ReservaListView(AdminRequiredMixin, ListView):
     model = Reserva
     template_name = 'biblioteca/reserva_list.html'
     context_object_name = 'reservas'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        queryset = Reserva.objects.select_related('usuario', 'livro', 'livro__autor').all()
+        
+        # Search functionality
+        query = self.request.GET.get('q')
+        if query:
+            queryset = queryset.filter(
+                Q(usuario__username__icontains=query) |
+                Q(usuario__first_name__icontains=query) |
+                Q(usuario__last_name__icontains=query) |
+                Q(usuario__email__icontains=query) |
+                Q(livro__titulo__icontains=query) |
+                Q(livro__autor__nome__icontains=query) |
+                Q(status__icontains=query)
+            )
+        
+        # Filter by status
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        # Filter by user type
+        tipo_usuario = self.request.GET.get('tipo_usuario')
+        if tipo_usuario:
+            queryset = queryset.filter(usuario__tipo_usuario=tipo_usuario)
+            
+        # Filter by date
+        data_inicio = self.request.GET.get('data_inicio')
+        if data_inicio:
+            queryset = queryset.filter(data_reserva__date__gte=data_inicio)
+            
+        return queryset.order_by('-data_reserva')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Add current time for expiration checking
+        context['now'] = timezone.now()
+        
+        # Add statistics
+        queryset = self.get_queryset()
+        context['total_reservas'] = queryset.count()
+        context['reservas_ativas'] = queryset.filter(status='ativa').count()
+        context['reservas_expiradas'] = queryset.filter(status='expirada').count()
+        context['reservas_canceladas'] = queryset.filter(status='cancelada').count()
+        
+        return context
 
 class MinhasReservasView(LoginRequiredMixin, ListView):
     model = Reserva
@@ -391,17 +437,38 @@ class EmprestimoCreateView(AdminRequiredMixin, CreateView):
     template_name = 'biblioteca/emprestimo_form.html'
     success_url = reverse_lazy('biblioteca:emprestimo_list')
     
+    def get_initial(self):
+        initial = super().get_initial()
+        # Se um livro foi especificado na URL, pré-seleciona ele
+        livro_id = self.request.GET.get('livro')
+        if livro_id:
+            try:
+                livro = Livro.objects.get(pk=livro_id)
+                initial['livro'] = livro
+            except Livro.DoesNotExist:
+                pass
+        return initial
+    
     def form_valid(self, form):
-        # Diminuir quantidade disponível do livro
-        livro = form.instance.livro
-        if livro.quantidade_disponivel > 0:
-            livro.quantidade_disponivel -= 1
-            livro.save()
-            messages.success(self.request, 'Empréstimo criado com sucesso!')
-            return super().form_valid(form)
-        else:
-            messages.error(self.request, 'Livro não disponível para empréstimo.')
+        try:
+            # Diminuir quantidade disponível do livro
+            livro = form.instance.livro
+            if livro.quantidade_disponivel > 0:
+                livro.quantidade_disponivel -= 1
+                livro.save()
+                messages.success(self.request, f'Empréstimo criado com sucesso! O livro "{livro.titulo}" foi emprestado para {form.instance.usuario.get_full_name() or form.instance.usuario.username}.')
+                return super().form_valid(form)
+            else:
+                form.add_error('livro', 'Este livro não está disponível para empréstimo.')
+                messages.error(self.request, 'Livro não disponível para empréstimo.')
+                return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f'Erro ao criar empréstimo: {str(e)}')
             return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Por favor, corrija os erros abaixo.')
+        return super().form_invalid(form)
 
 # Categoria views
 class CategoriaListView(ListView):
@@ -521,23 +588,145 @@ class ExpirarReservasView(AdminRequiredMixin, TemplateView):
 
 # Function-based views
 def devolver_livro(request, pk):
-    if request.method == 'POST':
+    """
+    View para devolver um livro emprestado.
+    Apenas admins ou o próprio usuário podem devolver o livro.
+    """
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False, 
+            'error': 'Método não permitido. Use POST.'
+        }, status=405)
+    
+    try:
         emprestimo = get_object_or_404(Emprestimo, pk=pk)
-        emprestimo.devolver()
-        messages.success(request, 'Livro devolvido com sucesso!')
-        return JsonResponse({'status': 'success'})
-    return JsonResponse({'status': 'error'})
+        
+        # Verificar se o usuário tem permissão (admin ou próprio usuário)
+        if not (request.user.is_authenticated and 
+                (request.user.is_admin() or request.user == emprestimo.usuario)):
+            return JsonResponse({
+                'success': False, 
+                'error': 'Você não tem permissão para devolver este livro.'
+            }, status=403)
+        
+        # Verificar se o empréstimo já foi devolvido
+        if emprestimo.status == 'devolvido':
+            return JsonResponse({
+                'success': False, 
+                'error': 'Este empréstimo já foi devolvido.'
+            }, status=400)
+        
+        # Verificar se o empréstimo está ativo
+        if emprestimo.status != 'ativo':
+            return JsonResponse({
+                'success': False, 
+                'error': f'Não é possível devolver um empréstimo com status "{emprestimo.get_status_display()}".'
+            }, status=400)
+        
+        # Tentar devolver
+        if emprestimo.devolver():
+            # Log da devolução
+            print(f"Empréstimo {emprestimo.pk} devolvido por {request.user.username} em {timezone.now()}")
+            
+            messages.success(request, 'Livro devolvido com sucesso!')
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Livro devolvido com sucesso!',
+                'data_devolucao': emprestimo.data_devolucao.strftime("%d/%m/%Y %H:%M") if emprestimo.data_devolucao else None
+            })
+        else:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Erro interno ao devolver o livro. Tente novamente.'
+            }, status=500)
+        
+    except Emprestimo.DoesNotExist:
+        return JsonResponse({
+            'success': False, 
+            'error': 'Empréstimo não encontrado.'
+        }, status=404)
+    except Exception as e:
+        print(f"Erro ao devolver livro {pk}: {str(e)}")
+        return JsonResponse({
+            'success': False, 
+            'error': 'Erro interno do servidor. Tente novamente.'
+        }, status=500)
 
 def renovar_emprestimo(request, pk):
-    if request.method == 'POST':
+    """
+    View para renovar um empréstimo.
+    Apenas empréstimos ativos, não atrasados e com menos de 2 renovações podem ser renovados.
+    """
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False, 
+            'error': 'Método não permitido. Use POST.'
+        }, status=405)
+    
+    try:
         emprestimo = get_object_or_404(Emprestimo, pk=pk)
+        
+        # Verificar se o usuário tem permissão (admin ou próprio usuário)
+        if not (request.user.is_authenticated and 
+                (request.user.is_admin() or request.user == emprestimo.usuario)):
+            return JsonResponse({
+                'success': False, 
+                'error': 'Você não tem permissão para renovar este empréstimo.'
+            }, status=403)
+        
+        # Validações antes de renovar
+        if emprestimo.status != 'ativo':
+            return JsonResponse({
+                'success': False, 
+                'error': f'Não é possível renovar um empréstimo com status "{emprestimo.get_status_display()}".'
+            })
+        
+        if emprestimo.is_atrasado():
+            return JsonResponse({
+                'success': False, 
+                'error': 'Não é possível renovar um empréstimo em atraso.'
+            })
+        
+        if emprestimo.renovacoes >= 2:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Este empréstimo já atingiu o limite máximo de 2 renovações.'
+            })
+        
+        # Tentar renovar
         if emprestimo.renovar():
-            messages.success(request, 'Empréstimo renovado com sucesso!')
-            return JsonResponse({'status': 'success'})
+            # Log da renovação
+            print(f"Empréstimo {emprestimo.pk} renovado por {request.user.username} em {timezone.now()}")
+            
+            messages.success(
+                request, 
+                f'Empréstimo renovado com sucesso! Nova data de devolução: {emprestimo.data_devolucao_prevista.strftime("%d/%m/%Y")}'
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Empréstimo renovado com sucesso!',
+                'nova_data_devolucao': emprestimo.data_devolucao_prevista.strftime("%d/%m/%Y"),
+                'renovacoes_restantes': 2 - emprestimo.renovacoes
+            })
         else:
-            messages.error(request, 'Não foi possível renovar o empréstimo.')
-            return JsonResponse({'status': 'error'})
-    return JsonResponse({'status': 'error'})
+            return JsonResponse({
+                'success': False, 
+                'error': 'Erro interno ao renovar o empréstimo.'
+            })
+            
+    except Emprestimo.DoesNotExist:
+        return JsonResponse({
+            'success': False, 
+            'error': 'Empréstimo não encontrado.'
+        }, status=404)
+    except Exception as e:
+        print(f"Erro ao renovar empréstimo {pk}: {str(e)}")
+        return JsonResponse({
+            'success': False, 
+            'error': 'Erro interno do servidor. Tente novamente.'
+        }, status=500)
 
 def livros_disponiveis(request):
     livros = Livro.objects.filter(quantidade_disponivel__gt=0)
@@ -551,3 +740,156 @@ def verificar_disponibilidade(request, livro_id):
         'quantidade_disponivel': livro.quantidade_disponivel,
         'quantidade_total': livro.quantidade
     })
+
+# View para deletar reserva (admin only)
+class DeletarReservaView(AdminRequiredMixin, DeleteView):
+    model = Reserva
+    template_name = 'biblioteca/reserva_confirm_delete.html'
+    success_url = reverse_lazy('biblioteca:reserva_list')
+    
+    def delete(self, request, *args, **kwargs):
+        reserva = self.get_object()
+        
+        # Se a reserva estiver ativa, liberar o livro
+        if reserva.status == 'ativa':
+            livro = reserva.livro
+            if livro.quantidade_disponivel < livro.quantidade:
+                livro.quantidade_disponivel += 1
+                livro.save()
+        
+        messages.success(request, f'Reserva deletada com sucesso!')
+        return super().delete(request, *args, **kwargs)
+
+# View para exportar reservas
+class ExportarReservasView(AdminRequiredMixin, TemplateView):
+    template_name = 'biblioteca/exportar_reservas.html'
+    
+    def get(self, request, *args, **kwargs):
+        format_type = request.GET.get('format', 'csv')
+        
+        # Aplicar os mesmos filtros da listagem
+        queryset = Reserva.objects.select_related('usuario', 'livro', 'livro__autor').all()
+        
+        query = request.GET.get('q')
+        if query:
+            queryset = queryset.filter(
+                Q(usuario__username__icontains=query) |
+                Q(usuario__first_name__icontains=query) |
+                Q(usuario__last_name__icontains=query) |
+                Q(usuario__email__icontains=query) |
+                Q(livro__titulo__icontains=query) |
+                Q(livro__autor__nome__icontains=query) |
+                Q(status__icontains=query)
+            )
+        
+        status = request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+            
+        tipo_usuario = request.GET.get('tipo_usuario')
+        if tipo_usuario:
+            queryset = queryset.filter(usuario__tipo_usuario=tipo_usuario)
+            
+        data_inicio = request.GET.get('data_inicio')
+        if data_inicio:
+            queryset = queryset.filter(data_reserva__date__gte=data_inicio)
+        
+        if format_type == 'csv':
+            return self.export_csv(queryset)
+        elif format_type == 'excel':
+            return self.export_excel(queryset)
+        elif format_type == 'pdf':
+            return self.export_pdf(queryset)
+        else:
+            return self.export_csv(queryset)
+    
+    def export_csv(self, queryset):
+        import csv
+        from django.http import HttpResponse
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="reservas.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID', 'Usuário', 'Email', 'Tipo Usuário', 'Livro', 'Autor', 
+            'Status', 'Data Reserva', 'Data Expiração'
+        ])
+        
+        for reserva in queryset:
+            writer.writerow([
+                reserva.id,
+                reserva.usuario.get_full_name() or reserva.usuario.username,
+                reserva.usuario.email,
+                reserva.usuario.get_tipo_usuario_display(),
+                reserva.livro.titulo,
+                reserva.livro.autor.nome,
+                reserva.get_status_display(),
+                reserva.data_reserva.strftime('%d/%m/%Y %H:%M'),
+                reserva.data_expiracao.strftime('%d/%m/%Y %H:%M') if reserva.data_expiracao else 'N/A'
+            ])
+        
+        return response
+    
+    def export_excel(self, queryset):
+        try:
+            import openpyxl
+            from openpyxl import Workbook
+            from django.http import HttpResponse
+            
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Reservas"
+            
+            # Headers
+            headers = [
+                'ID', 'Usuário', 'Email', 'Tipo Usuário', 'Livro', 'Autor', 
+                'Status', 'Data Reserva', 'Data Expiração'
+            ]
+            for col, header in enumerate(headers, 1):
+                ws.cell(row=1, column=col, value=header)
+            
+            # Data
+            for row, reserva in enumerate(queryset, 2):
+                ws.cell(row=row, column=1, value=reserva.id)
+                ws.cell(row=row, column=2, value=reserva.usuario.get_full_name() or reserva.usuario.username)
+                ws.cell(row=row, column=3, value=reserva.usuario.email)
+                ws.cell(row=row, column=4, value=reserva.usuario.get_tipo_usuario_display())
+                ws.cell(row=row, column=5, value=reserva.livro.titulo)
+                ws.cell(row=row, column=6, value=reserva.livro.autor.nome)
+                ws.cell(row=row, column=7, value=reserva.get_status_display())
+                ws.cell(row=row, column=8, value=reserva.data_reserva.strftime('%d/%m/%Y %H:%M'))
+                ws.cell(row=row, column=9, value=reserva.data_expiracao.strftime('%d/%m/%Y %H:%M') if reserva.data_expiracao else 'N/A')
+            
+            response = HttpResponse(
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            response['Content-Disposition'] = 'attachment; filename="reservas.xlsx"'
+            wb.save(response)
+            return response
+            
+        except ImportError:
+            messages.error(self.request, 'Biblioteca openpyxl não está instalada para exportação Excel.')
+            return redirect('biblioteca:reserva_list')
+    
+    def export_pdf(self, queryset):
+        try:
+            from django.template.loader import render_to_string
+            from weasyprint import HTML
+            from django.http import HttpResponse
+            
+            html_string = render_to_string('biblioteca/reserva_pdf.html', {
+                'reservas': queryset,
+                'data_exportacao': timezone.now()
+            })
+            
+            html = HTML(string=html_string)
+            pdf = html.write_pdf()
+            
+            response = HttpResponse(pdf, content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="reservas.pdf"'
+            return response
+            
+        except ImportError:
+            messages.error(self.request, 'Biblioteca WeasyPrint não está instalada para exportação PDF.')
+            return redirect('biblioteca:reserva_list')

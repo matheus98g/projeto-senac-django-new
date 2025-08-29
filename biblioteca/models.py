@@ -330,23 +330,102 @@ class Emprestimo(models.Model):
         super().save(*args, **kwargs)
     
     def devolver(self):
-        """Marca o empréstimo como devolvido"""
-        if not self.data_devolucao:
+        """
+        Marca o empréstimo como devolvido
+        
+        Returns:
+            bool: True se devolvido com sucesso, False caso contrário
+        """
+        try:
+            # Verificar se já foi devolvido
+            if self.data_devolucao:
+                return False
+            
+            # Verificar se o empréstimo está ativo
+            if self.status != 'ativo':
+                return False
+            
+            # Marcar como devolvido
             self.data_devolucao = timezone.now()
             self.status = 'devolvido'
+            
             # Aumentar quantidade disponível do livro
             self.livro.quantidade_disponivel += 1
             self.livro.save()
+            
+            # Salvar o empréstimo
             self.save()
+            
+            return True
+            
+        except Exception as e:
+            print(f"Erro ao devolver empréstimo {self.pk}: {str(e)}")
+            return False
     
     def renovar(self):
-        """Renova o empréstimo por mais 15 dias"""
-        if self.renovacoes < 2 and not self.data_devolucao:
-            self.data_devolucao_prevista = timezone.now() + timedelta(days=15)
+        """
+        Renova o empréstimo por mais 15 dias.
+        
+        Returns:
+            bool: True se renovado com sucesso, False caso contrário
+        """
+        # Verificar se pode renovar
+        if not self.pode_renovar():
+            return False
+        
+        try:
+            # Calcular nova data de devolução (adicionar 15 dias à data atual)
+            nova_data = timezone.now() + timedelta(days=15)
+            self.data_devolucao_prevista = nova_data
             self.renovacoes += 1
+            
+            # Atualizar status se estava atrasado
+            if self.status == 'atrasado':
+                self.status = 'ativo'
+            
             self.save()
             return True
-        return False
+            
+        except Exception as e:
+            print(f"Erro ao renovar empréstimo {self.pk}: {str(e)}")
+            return False
+    
+    def pode_renovar(self):
+        """
+        Verifica se o empréstimo pode ser renovado.
+        
+        Returns:
+            bool: True se pode renovar, False caso contrário
+        """
+        # Não pode renovar se já foi devolvido
+        if self.data_devolucao:
+            return False
+        
+        # Não pode renovar se já atingiu o limite de renovações
+        if self.renovacoes >= 2:
+            return False
+        
+        # Não pode renovar se não estiver ativo
+        if self.status != 'ativo':
+            return False
+        
+        # Pode renovar se não estiver atrasado ou se estiver atrasado mas dentro de tolerância
+        if self.is_atrasado():
+            # Permitir renovação se atraso for menor que 7 dias (tolerância)
+            dias_atraso = self.dias_atraso()
+            if dias_atraso > 7:
+                return False
+        
+        return True
+    
+    def get_renovacoes_restantes(self):
+        """
+        Retorna quantas renovações ainda são possíveis.
+        
+        Returns:
+            int: Número de renovações restantes
+        """
+        return max(0, 2 - self.renovacoes)
     
     def is_atrasado(self):
         """Verifica se o empréstimo está atrasado"""

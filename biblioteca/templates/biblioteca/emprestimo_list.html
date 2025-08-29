@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    Empréstimos - Sistema de Biblioteca SENAC
+{% endblock %}
+
+{% block content %}
+<!-- CSRF Token for AJAX requests -->
+{% csrf_token %}
+
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:dashboard' %}">
+                <i class="fas fa-home me-1"></i>Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            <i class="fas fa-exchange-alt me-1"></i>Empréstimos
+        </li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-exchange-alt text-primary me-2"></i>
+                    Gerenciar Empréstimos
+                </h1>
+                <p class="text-muted mb-0">
+                    Visualize e gerencie todos os empréstimos da biblioteca
+                </p>
+            </div>
+            
+            <!-- Create Button -->
+            <a href="{% url 'biblioteca:emprestimo_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Novo Empréstimo
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Empréstimos Table -->
+<div class="card shadow-lg border-0">
+    <div class="card-header bg-white">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-list me-2"></i>
+            Lista de Empréstimos
+        </h5>
+    </div>
+    
+    <div class="card-body p-0">
+        {% if emprestimos %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Livro</th>
+                            <th>Data Empréstimo</th>
+                            <th>Devolução Prevista</th>
+                            <th>Status</th>
+                            <th>Renovações</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for emprestimo in emprestimos %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-3">
+                                        {{ emprestimo.usuario.first_name|first|upper|default:emprestimo.usuario.username|first|upper }}
+                                    </div>
+                                    <div>
+                                        <strong>{{ emprestimo.usuario.get_full_name|default:emprestimo.usuario.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ emprestimo.usuario.email }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ emprestimo.livro.titulo }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ emprestimo.livro.autor.nome }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">
+                                    {{ emprestimo.data_emprestimo|date:"d/m/Y" }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if emprestimo.status == 'ativo' %}
+                                    {% if emprestimo.is_atrasado %}
+                                        <span class="badge bg-danger">
+                                            {{ emprestimo.data_devolucao_prevista|date:"d/m/Y" }}
+                                            <br>
+                                            <small>Atrasado {{ emprestimo.dias_atraso }} dias</small>
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success">
+                                            {{ emprestimo.data_devolucao_prevista|date:"d/m/Y" }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        {{ emprestimo.data_devolucao_prevista|date:"d/m/Y" }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if emprestimo.status == 'ativo' %}
+                                    {% if emprestimo.is_atrasado %}
+                                        <span class="badge bg-danger">Atrasado</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Ativo</span>
+                                    {% endif %}
+                                {% elif emprestimo.status == 'devolvido' %}
+                                    <span class="badge bg-info">Devolvido</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ emprestimo.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">
+                                    {{ emprestimo.renovacoes }}/2
+                                </span>
+                                {% if emprestimo.status == 'ativo' and emprestimo.renovacoes < 2 %}
+                                    <br>
+                                    <small class="text-success">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {{ emprestimo.get_renovacoes_restantes }} renovação{{ emprestimo.get_renovacoes_restantes|pluralize:"es" }} restante{{ emprestimo.get_renovacoes_restantes|pluralize:"s" }}
+                                    </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'biblioteca:emprestimo_detail' emprestimo.pk %}" 
+                                       class="btn btn-sm btn-outline-primary" title="Ver detalhes">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if emprestimo.status == 'ativo' %}
+                                        {% if not emprestimo.is_atrasado and emprestimo.renovacoes < 2 %}
+                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                    onclick="renovarEmprestimo({{ emprestimo.pk }})" title="Renovar">
+                                                <i class="fas fa-redo"></i>
+                                            </button>
+                                        {% endif %}
+                                        
+                                        <button type="button" class="btn btn-sm btn-outline-success" 
+                                                onclick="devolverLivro({{ emprestimo.pk }})" title="Devolver">
+                                            <i class="fas fa-undo"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Nenhum empréstimo encontrado</h5>
+                <p class="text-muted">Não há empréstimos registrados no sistema.</p>
+                <a href="{% url 'biblioteca:emprestimo_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Criar Primeiro Empréstimo
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- JavaScript for Actions -->
+<script>
+function renovarEmprestimo(emprestimoId) {
+    if (confirm('Tem certeza que deseja renovar este empréstimo por mais 15 dias?')) {
+        // Mostrar loading no botão
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        // Obter token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            alert('Erro: Token de segurança não encontrado. Recarregue a página e tente novamente.');
+            button.innerHTML = originalText;
+            button.disabled = false;
+            return;
+        }
+        
+        fetch(`/emprestimos/${emprestimoId}/renovar/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken.value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensagem de sucesso detalhada
+                const successMessage = `Empréstimo renovado com sucesso!\n\nNova data de devolução: ${data.nova_data_devolucao}\nRenovações restantes: ${data.renovacoes_restantes}`;
+                alert(successMessage);
+                
+                // Recarregar a página para mostrar as atualizações
+                location.reload();
+            } else {
+                // Mostrar erro específico
+                alert('Erro ao renovar empréstimo:\n' + data.error);
+                
+                // Restaurar botão
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro de conexão: ' + error.message + '\n\nTente novamente.');
+            
+            // Restaurar botão
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+function devolverLivro(emprestimoId) {
+    if (confirm('Tem certeza que deseja devolver este livro?')) {
+        // Obter token CSRF
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrfToken) {
+            alert('Erro: Token de segurança não encontrado. Recarregue a página e tente novamente.');
+            return;
+        }
+        
+        fetch(`/emprestimos/${emprestimoId}/devolver/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken.value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert('Livro devolvido com sucesso!');
+                location.reload();
+            } else {
+                alert('Erro ao devolver livro: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao devolver livro: ' + error.message);
+        });
+    }
+}
+</script>
+{% endblock %}

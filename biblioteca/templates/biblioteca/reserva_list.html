@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+
+{% block title %}Gerenciar Reservas - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h2 mb-1">
+            <i class="fas fa-calendar-check me-2 text-primary"></i>Gerenciar Reservas
+        </h1>
+        <p class="text-muted mb-0">Visualize e gerencie todas as reservas do sistema</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'biblioteca:admin_dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Voltar ao Dashboard
+        </a>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#exportModal">
+            <i class="fas fa-download me-2"></i>Exportar
+        </button>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="stats-card">
+            <h5>Total de Reservas</h5>
+            <h2>{{ reservas|length }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #198754, #146c43);">
+            <h5>Reservas Ativas</h5>
+            <h2>{{ reservas_ativas }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #dc3545, #b02a37);">
+            <h5>Reservas Expiradas</h5>
+            <h2>{{ reservas_expiradas }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #6c757d, #495057);">
+            <h5>Reservas Canceladas</h5>
+            <h2>{{ reservas_canceladas }}</h2>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Form -->
+<div class="search-form">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" 
+                       class="form-control" 
+                       name="q" 
+                       value="{{ request.GET.q }}" 
+                       placeholder="Buscar por usuário, livro ou status...">
+                <button type="submit" class="btn btn-outline-primary">Buscar</button>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">Todos os status</option>
+                <option value="ativa" {% if request.GET.status == 'ativa' %}selected{% endif %}>Ativa</option>
+                <option value="cancelada" {% if request.GET.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
+                <option value="expirada" {% if request.GET.status == 'expirada' %}selected{% endif %}>Expirada</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="tipo_usuario" class="form-select">
+                <option value="">Todos os tipos</option>
+                <option value="aluno" {% if request.GET.tipo_usuario == 'aluno' %}selected{% endif %}>Aluno</option>
+                <option value="admin" {% if request.GET.tipo_usuario == 'admin' %}selected{% endif %}>Administrador</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" 
+                   class="form-control" 
+                   name="data_inicio" 
+                   value="{{ request.GET.data_inicio }}" 
+                   placeholder="Data início">
+        </div>
+        <div class="col-md-2">
+            <a href="{% url 'biblioteca:reserva_list' %}" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-undo me-2"></i>Limpar
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- Results Summary -->
+{% if request.GET.q or request.GET.status or request.GET.tipo_usuario or request.GET.data_inicio %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Filtros aplicados:
+        {% if request.GET.q %}<span class="badge bg-primary me-2">Busca: "{{ request.GET.q }}"</span>{% endif %}
+        {% if request.GET.status %}<span class="badge bg-info me-2">Status: {{ request.GET.status|title }}</span>{% endif %}
+        {% if request.GET.tipo_usuario %}<span class="badge bg-warning me-2">Tipo: {{ request.GET.tipo_usuario|title }}</span>{% endif %}
+        {% if request.GET.data_inicio %}<span class="badge bg-success me-2">Data: {{ request.GET.data_inicio }}</span>{% endif %}
+        <span class="badge bg-secondary ms-2">{{ reservas|length }} reserva(s) encontrada(s)</span>
+    </div>
+{% endif %}
+
+<!-- Reservas Table -->
+{% if reservas %}
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Livro</th>
+                            <th>Status</th>
+                            <th>Data da Reserva</th>
+                            <th>Data de Expiração</th>
+                            <th>Tipo de Usuário</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reserva in reservas %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar me-3">
+                                            {{ reserva.usuario.first_name|first|upper|default:reserva.usuario.username|first|upper }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</div>
+                                            <small class="text-muted">{{ reserva.usuario.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <div class="fw-bold">{{ reserva.livro.titulo }}</div>
+                                        <small class="text-muted">{{ reserva.livro.autor.nome }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if reserva.status == 'ativa' %}
+                                        <span class="badge bg-success">Ativa</span>
+                                    {% elif reserva.status == 'cancelada' %}
+                                        <span class="badge bg-danger">Cancelada</span>
+                                    {% elif reserva.status == 'expirada' %}
+                                        <span class="badge bg-warning">Expirada</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div>{{ reserva.data_reserva|date:"d/m/Y" }}</div>
+                                    <small class="text-muted">{{ reserva.data_reserva|date:"H:i" }}</small>
+                                </td>
+                                <td>
+                                    {% if reserva.data_expiracao %}
+                                        <div>{{ reserva.data_expiracao|date:"d/m/Y" }}</div>
+                                        <small class="text-muted">{{ reserva.data_expiracao|date:"H:i" }}</small>
+                                    {% else %}
+                                        <span class="text-muted">Não definida</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge {% if reserva.usuario.tipo_usuario == 'admin' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                        {{ reserva.usuario.get_tipo_usuario_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#reservaDetailModal{{ reserva.id }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        {% if reserva.status == 'ativa' %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-warning" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#cancelarReservaModal{{ reserva.id }}">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        {% endif %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#deletarReservaModal{{ reserva.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <nav aria-label="Navegação de páginas" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">Nenhuma reserva encontrada</h4>
+        <p class="text-muted">Não há reservas que correspondam aos critérios de busca.</p>
+    </div>
+{% endif %}
+
+<!-- Detail Modals for each reservation -->
+{% for reserva in reservas %}
+    <!-- Reserva Detail Modal -->
+    <div class="modal fade" id="reservaDetailModal{{ reserva.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalhes da Reserva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Informações do Usuário</h6>
+                            <p><strong>Nome:</strong> {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</p>
+                            <p><strong>Email:</strong> {{ reserva.usuario.email }}</p>
+                            <p><strong>Tipo:</strong> {{ reserva.usuario.get_tipo_usuario_display }}</p>
+                            <p><strong>Data de Cadastro:</strong> {{ reserva.usuario.data_cadastro|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Informações do Livro</h6>
+                            <p><strong>Título:</strong> {{ reserva.livro.titulo }}</p>
+                            <p><strong>Autor:</strong> {{ reserva.livro.autor.nome }}</p>
+                            <p><strong>Gênero:</strong> {{ reserva.livro.get_genero_display }}</p>
+                            <p><strong>Quantidade Disponível:</strong> {{ reserva.livro.quantidade_disponivel }}/{{ reserva.livro.quantidade }}</p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Informações da Reserva</h6>
+                            <p><strong>Status:</strong> 
+                                {% if reserva.status == 'ativa' %}
+                                    <span class="badge bg-success">Ativa</span>
+                                {% elif reserva.status == 'cancelada' %}
+                                    <span class="badge bg-danger">Cancelada</span>
+                                {% elif reserva.status == 'expirada' %}
+                                    <span class="badge bg-warning">Expirada</span>
+                                {% endif %}
+                            </p>
+                            <p><strong>Data da Reserva:</strong> {{ reserva.data_reserva|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Datas</h6>
+                            {% if reserva.data_expiracao %}
+                                <p><strong>Data de Expiração:</strong> {{ reserva.data_expiracao|date:"d/m/Y H:i" }}</p>
+                                {% if reserva.status == 'ativa' %}
+                                    {% if reserva.data_expiracao < now %}
+                                        <p class="text-danger"><strong>Status:</strong> Expirada</p>
+                                    {% else %}
+                                        <p class="text-success"><strong>Status:</strong> Válida</p>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <p><strong>Data de Expiração:</strong> <span class="text-muted">Não definida</span></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cancelar Reserva Modal -->
+    {% if reserva.status == 'ativa' %}
+        <div class="modal fade" id="cancelarReservaModal{{ reserva.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Cancelar Reserva</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Tem certeza que deseja cancelar a reserva do usuário <strong>{{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</strong> para o livro <strong>{{ reserva.livro.titulo }}</strong>?</p>
+                        <p class="text-warning"><i class="fas fa-exclamation-triangle me-2"></i>Esta ação não pode ser desfeita.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <form method="post" action="{% url 'biblioteca:cancelar_reserva' reserva.id %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-warning">Confirmar Cancelamento</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Deletar Reserva Modal -->
+    <div class="modal fade" id="deletarReservaModal{{ reserva.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Deletar Reserva</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja deletar permanentemente esta reserva?</p>
+                    <p><strong>Usuário:</strong> {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}</p>
+                    <p><strong>Livro:</strong> {{ reserva.livro.titulo }}</p>
+                    <p class="text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Esta ação não pode ser desfeita e removerá todos os dados da reserva.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form method="post" action="{% url 'biblioteca:deletar_reserva' reserva.id %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger">Confirmar Exclusão</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}
+
+<!-- Export Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Exportar Reservas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Escolha o formato para exportar as reservas:</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'biblioteca:exportar_reservas' %}?format=csv{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-csv me-2"></i>Exportar como CSV
+                    </a>
+                    <a href="{% url 'biblioteca:exportar_reservas' %}?format=excel{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}" class="btn btn-outline-success">
+                        <i class="fas fa-file-excel me-2"></i>Exportar como Excel
+                    </a>
+                    <a href="{% url 'biblioteca:exportar_reservas' %}?format=pdf{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.tipo_usuario %}&tipo_usuario={{ request.GET.tipo_usuario }}{% endif %}{% if request.GET.data_inicio %}&data_inicio={{ request.GET.data_inicio }}{% endif %}" class="btn btn-outline-danger">
+                        <i class="fas fa-file-pdf me-2"></i>Exportar como PDF
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh para atualizar status das reservas expiradas
+    setTimeout(function() {
+        location.reload();
+    }, 300000); // 5 minutos
+
+    // Tooltip initialization
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+</script>
+{% endblock %}

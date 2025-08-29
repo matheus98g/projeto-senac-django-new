@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Exclusão de Reserva - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Exclusão
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Tem certeza que deseja deletar esta reserva?</h5>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Atenção:</strong> Esta ação não pode ser desfeita e removerá permanentemente todos os dados da reserva.
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Usuário:</strong><br>
+                            {{ reserva.usuario.get_full_name|default:reserva.usuario.username }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Email:</strong><br>
+                            {{ reserva.usuario.email }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Livro:</strong><br>
+                            {{ reserva.livro.titulo }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Autor:</strong><br>
+                            {{ reserva.livro.autor.nome }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Status:</strong><br>
+                            {% if reserva.status == 'ativa' %}
+                                <span class="badge bg-success">Ativa</span>
+                            {% elif reserva.status == 'cancelada' %}
+                                <span class="badge bg-danger">Cancelada</span>
+                            {% elif reserva.status == 'expirada' %}
+                                <span class="badge bg-warning">Expirada</span>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Data da Reserva:</strong><br>
+                            {{ reserva.data_reserva|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                    
+                    {% if reserva.status == 'ativa' %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Como esta reserva está ativa, o livro será liberado para outras reservas após a exclusão.
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'biblioteca:reserva_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>Confirmar Exclusão
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

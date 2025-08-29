@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    Novo Empréstimo - Sistema de Biblioteca SENAC
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:dashboard' %}">
+                <i class="fas fa-home me-1"></i>Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:emprestimo_list' %}">
+                <i class="fas fa-exchange-alt me-1"></i>Empréstimos
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            Novo Empréstimo
+        </li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-plus text-primary me-2"></i>
+                    Novo Empréstimo
+                </h1>
+                <p class="text-muted mb-0">
+                    Preencha as informações para criar um novo empréstimo
+                </p>
+            </div>
+            
+            <!-- Back Button -->
+            <a href="{% url 'biblioteca:emprestimo_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar à Lista
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Form Card -->
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    Informações do Empréstimo
+                </h5>
+            </div>
+            
+            <div class="card-body p-4">
+                <!-- Messages -->
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Form Errors -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger mb-4">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Erro de Validação:</strong>
+                        <ul class="mb-0 mt-2">
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+                
+                <form method="post" novalidate id="emprestimoForm">
+                    {% csrf_token %}
+                    
+                    <!-- Usuario Field -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.usuario.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-2"></i>Usuário <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                {{ form.usuario }}
+                            </div>
+                            {% if form.usuario.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.usuario.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.usuario.help_text %}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>{{ form.usuario.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Livro Field -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.livro.id_for_label }}" class="form-label">
+                                <i class="fas fa-book me-2"></i>Livro <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-book"></i>
+                                </span>
+                                {{ form.livro }}
+                            </div>
+                            {% if form.livro.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.livro.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.livro.help_text %}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>{{ form.livro.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Informações do Empréstimo -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-info-circle me-2"></i>Informações do Empréstimo
+                                </h6>
+                                <ul class="mb-0">
+                                    <li>O empréstimo será criado com prazo de <strong>15 dias</strong></li>
+                                    <li>O usuário poderá renovar o empréstimo até <strong>2 vezes</strong></li>
+                                    <li>A quantidade disponível do livro será reduzida automaticamente</li>
+                                    <li>O status será definido como <strong>"Ativo"</strong></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'biblioteca:emprestimo_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Criar Empréstimo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript para pré-seleção do livro se passado via query parameter -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verificar se há um livro selecionado na URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const livroId = urlParams.get('livro');
+    
+    if (livroId) {
+        const livroSelect = document.getElementById('{{ form.livro.id_for_label }}');
+        if (livroSelect) {
+            livroSelect.value = livroId;
+        }
+    }
+    
+    // Validação do formulário
+    const form = document.getElementById('emprestimoForm');
+    form.addEventListener('submit', function(e) {
+        const usuario = document.getElementById('{{ form.usuario.id_for_label }}').value;
+        const livro = document.getElementById('{{ form.livro.id_for_label }}').value;
+        
+        if (!usuario || !livro) {
+            e.preventDefault();
+            alert('Por favor, preencha todos os campos obrigatórios.');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,585 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}Editar Livro{% else %}Novo Livro{% endif %} - Sistema de Biblioteca SENAC
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb Navigation -->
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:dashboard' %}">
+                <i class="fas fa-home me-1"></i>Dashboard
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'biblioteca:livro_list' %}">
+                <i class="fas fa-books me-1"></i>Livros
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+            {% if form.instance.pk %}Editar{% else %}Novo{% endif %} Livro
+        </li>
+    </ol>
+</nav>
+
+<!-- Page Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} text-primary me-2"></i>
+                    {% if form.instance.pk %}Editar Livro{% else %}Novo Livro{% endif %}
+                </h1>
+                <p class="text-muted mb-0">
+                    {% if form.instance.pk %}
+                        Atualize as informações do livro "{{ form.instance.titulo }}"
+                    {% else %}
+                        Preencha as informações para cadastrar um novo livro
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Back Button -->
+            <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Voltar à Lista
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Form Card -->
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-book me-2"></i>
+                    Informações do Livro
+                </h5>
+            </div>
+            
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data" novalidate id="livroForm">
+                    {% csrf_token %}
+                    
+                    <!-- Title Field -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.titulo.id_for_label }}" class="form-label">
+                                <i class="fas fa-heading me-2"></i>Título do Livro <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-book"></i>
+                                </span>
+                                {{ form.titulo }}
+                            </div>
+                            {% if form.titulo.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.titulo.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.titulo.help_text %}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>{{ form.titulo.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Author and Genre Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.autor.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-2"></i>Autor <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-user-edit"></i>
+                                </span>
+                                {{ form.autor }}
+                            </div>
+                            {% if form.autor.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.autor.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Quick Add Author Button -->
+                            <div class="mt-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        data-bs-toggle="modal" data-bs-target="#addAuthorModal">
+                                    <i class="fas fa-plus me-1"></i>Adicionar Novo Autor
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.genero.id_for_label }}" class="form-label">
+                                <i class="fas fa-tags me-2"></i>Gênero <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-tag"></i>
+                                </span>
+                                {{ form.genero }}
+                            </div>
+                            {% if form.genero.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.genero.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Quantity Fields Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.quantidade.id_for_label }}" class="form-label">
+                                <i class="fas fa-copy me-2"></i>Quantidade Total <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-hashtag"></i>
+                                </span>
+                                {{ form.quantidade }}
+                            </div>
+                            {% if form.quantidade.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.quantidade.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            {% if form.quantidade.help_text %}
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>{{ form.quantidade.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.quantidade_disponivel.id_for_label }}" class="form-label">
+                                <i class="fas fa-check-circle me-2"></i>Quantidade Disponível
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-hashtag"></i>
+                                </span>
+                                {{ form.quantidade_disponivel }}
+                            </div>
+                            {% if form.quantidade_disponivel.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.quantidade_disponivel.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Deixe em branco para usar a quantidade total como padrão
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cover Image Field -->
+                    {% if form.capa %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.capa.id_for_label }}" class="form-label">
+                                <i class="fas fa-image me-2"></i>Capa do Livro
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-upload"></i>
+                                </span>
+                                {{ form.capa }}
+                            </div>
+                            {% if form.capa.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.capa.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Current Cover Preview -->
+                            {% if form.instance.capa %}
+                            <div class="mt-2">
+                                <small class="text-muted">Capa atual:</small>
+                                <div class="mt-1">
+                                    <img src="{{ form.instance.capa.url }}" 
+                                         alt="Capa atual" 
+                                         class="img-thumbnail" 
+                                         style="max-height: 100px;">
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Description Field (if exists) -->
+                    {% if form.descricao %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.descricao.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left me-2"></i>Descrição
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-file-text"></i>
+                                </span>
+                                {{ form.descricao }}
+                            </div>
+                            {% if form.descricao.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.descricao.errors %}
+                                        <i class="fas fa-exclamation-circle me-1"></i>{{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Hidden Fields -->
+                    {% for hidden_field in form.hidden_fields %}
+                        {{ hidden_field }}
+                    {% endfor %}
+                    
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{% url 'biblioteca:livro_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-{% if form.instance.pk %}save{% else %}plus{% endif %} me-2"></i>
+                                    {% if form.instance.pk %}Salvar Alterações{% else %}Cadastrar Livro{% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Form Validation Summary -->
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger mt-3" role="alert">
+            <h6 class="alert-heading">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Erros de Validação
+            </h6>
+            <ul class="mb-0">
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar with Help and Tips -->
+    <div class="col-lg-4">
+        <!-- Help Card -->
+        <div class="card mb-3">
+            <div class="card-header bg-info text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Ajuda e Dicas
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6 class="text-info">Campos Obrigatórios</h6>
+                    <small class="text-muted">
+                        Os campos marcados com <span class="text-danger">*</span> são obrigatórios.
+                    </small>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-info">Quantidade Disponível</h6>
+                    <small class="text-muted">
+                        Se não informada, será igual à quantidade total. 
+                        Não pode ser maior que a quantidade total.
+                    </small>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="text-info">Capa do Livro</h6>
+                    <small class="text-muted">
+                        Formatos aceitos: JPG, PNG, GIF. 
+                        Tamanho máximo: 5MB.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats (if editing) -->
+        {% if form.instance.pk %}
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Estatísticas do Livro
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-2">
+                        <div class="p-2 bg-light rounded">
+                            <div class="h6 mb-1 text-primary">{{ form.instance.get_total_loans|default:0 }}</div>
+                            <small class="text-muted">Empréstimos</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <div class="p-2 bg-light rounded">
+                            <div class="h6 mb-1 text-warning">{{ form.instance.get_active_reservations|default:0 }}</div>
+                            <small class="text-muted">Reservas</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        Cadastrado em: {{ form.instance.data_cadastro|date:"d/m/Y" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Author Modal -->
+<div class="modal fade" id="addAuthorModal" tabindex="-1" aria-labelledby="addAuthorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addAuthorModalLabel">
+                    <i class="fas fa-user-plus me-2"></i>Adicionar Novo Autor
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAuthorForm">
+                    <div class="mb-3">
+                        <label for="authorName" class="form-label">Nome do Autor</label>
+                        <input type="text" class="form-control" id="authorName" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="addNewAuthor()">Adicionar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Form styling */
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Required field indicator */
+.text-danger {
+    font-weight: bold;
+}
+
+/* Card styling */
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-1px);
+}
+
+/* Form validation styling */
+.form-control.is-invalid {
+    border-color: var(--danger-color);
+}
+
+.form-control.is-valid {
+    border-color: var(--success-color);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+    
+    .d-flex.gap-2 .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus on title field
+    const titleField = document.querySelector('input[name="titulo"]');
+    if (titleField) {
+        titleField.focus();
+    }
+    
+    // Form validation enhancement
+    const form = document.getElementById('livroForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            let isValid = true;
+            
+            // Remove previous validation classes
+            const inputs = form.querySelectorAll('.form-control, .form-select');
+            inputs.forEach(input => {
+                input.classList.remove('is-invalid', 'is-valid');
+            });
+            
+            // Validate required fields
+            const requiredFields = form.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.add('is-valid');
+                }
+            });
+            
+            // Validate quantity fields
+            const totalQty = document.querySelector('input[name="quantidade"]');
+            const availableQty = document.querySelector('input[name="quantidade_disponivel"]');
+            
+            if (totalQty && availableQty && availableQty.value.trim()) {
+                const total = parseInt(totalQty.value) || 0;
+                const available = parseInt(availableQty.value) || 0;
+                
+                if (available > total) {
+                    availableQty.classList.add('is-invalid');
+                    isValid = false;
+                    
+                    // Show error message
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback d-block';
+                    errorDiv.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>A quantidade disponível não pode ser maior que a quantidade total.';
+                    
+                    availableQty.parentNode.appendChild(errorDiv);
+                }
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                
+                // Show validation summary
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Erro de Validação:</strong> Por favor, corrija os campos destacados.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                
+                form.appendChild(alertDiv);
+                
+                // Scroll to first error
+                const firstError = form.querySelector('.is-invalid');
+                if (firstError) {
+                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+    }
+    
+    // Auto-calculate available quantity if not set
+    const totalQtyField = document.querySelector('input[name="quantidade"]');
+    const availableQtyField = document.querySelector('input[name="quantidade_disponivel"]');
+    
+    if (totalQtyField && availableQtyField) {
+        totalQtyField.addEventListener('input', function() {
+            if (!availableQtyField.value.trim()) {
+                availableQtyField.value = this.value;
+            }
+        });
+    }
+});
+
+// Function to add new author
+function addNewAuthor() {
+    const authorName = document.getElementById('authorName').value.trim();
+    
+    if (!authorName) {
+        alert('Por favor, informe o nome do autor.');
+        return;
+    }
+    
+    // Here you would typically make an AJAX call to create the author
+    // For now, we'll just close the modal and show a message
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addAuthorModal'));
+    modal.hide();
+    
+    // Show success message
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-3';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        <strong>Autor adicionado!</strong> O autor "${authorName}" foi adicionado com sucesso.
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.querySelector('.card-body').appendChild(alertDiv);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Auto-hide alerts
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            if (alert.classList.contains('alert-success')) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }
+        });
+    }, 5000);
+});
+</script>
+{% endblock %}

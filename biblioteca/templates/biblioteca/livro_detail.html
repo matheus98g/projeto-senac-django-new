@@ -375,7 +375,7 @@
 // Função para renovar empréstimo
 function renovarEmprestimo(emprestimoId) {
     if (confirm('Deseja renovar este empréstimo?')) {
-        fetch(`/biblioteca/emprestimo/${emprestimoId}/renovar/`, {
+        fetch(`/emprestimos/${emprestimoId}/renovar/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
@@ -395,7 +395,7 @@ function renovarEmprestimo(emprestimoId) {
 // Função para devolver livro
 function devolverLivro(emprestimoId) {
     if (confirm('Deseja marcar este livro como devolvido?')) {
-        fetch(`/biblioteca/emprestimo/${emprestimoId}/devolver/`, {
+        fetch(`/emprestimos/${emprestimoId}/devolver/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,

@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Página Inicial - Sistema de Biblioteca SENAC{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Cabeçalho da página -->
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-home text-primary me-2"></i>
+                    Página Inicial
+                </h1>
+                <p class="text-muted mb-0">Bem-vindo ao Sistema de Biblioteca SENAC</p>
+            </div>
+            <div class="text-end">
+                <p class="text-muted mb-0">
+                    <i class="fas fa-calendar-alt me-1"></i>
+                    <span id="home-data"></span>
+                </p>
+                <small class="text-muted">
+                    <i class="fas fa-clock me-1"></i>
+                    <span id="home-hora"></span>
+                </small>
+            </div>
+            <script>
+                function atualizarDataHoraHome() {
+                    const dataAtual = new Date()
+                    const dia = String(dataAtual.getDate()).padStart(2, '0')
+                    const mes = String(dataAtual.getMonth() + 1).padStart(2, '0')
+                    const ano = dataAtual.getFullYear()
+                    const horas = String(dataAtual.getHours()).padStart(2, '0')
+                    const minutos = String(dataAtual.getMinutes()).padStart(2, '0')
+                    const segundos = String(dataAtual.getSeconds()).padStart(2, '0')
+                    document.getElementById('home-data').textContent = `${dia}/${mes}/${ano}`
+                    document.getElementById('home-hora').textContent = `${horas}:${minutos}:${segundos}`
+                }
+                atualizarDataHoraHome()
+                setInterval(atualizarDataHoraHome, 1000)
+            </script>
+        </div>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Total de Livros</h5>
+                    <h2>{{ total_livros|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-books fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #198754, #146c43);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Total de Usuários</h5>
+                    <h2>{{ total_usuarios|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #0dcaf0, #0aa2c0);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Empréstimos Ativos</h5>
+                    <h2>{{ emprestimos_ativos|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="stats-card" style="background: linear-gradient(135deg, #ffc107, #e0a800);">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h5>Reservas Ativas</h5>
+                    <h2>{{ reservas_ativas|default:0 }}</h2>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-bookmark fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção de Ações Rápidas -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt text-warning me-2"></i>
+                    Ações Rápidas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'biblioteca:livro_create' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            Adicionar Livro
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'biblioteca:emprestimo_create' %}" class="btn btn-success w-100">
+                            <i class="fas fa-exchange-alt me-2"></i>
+                            Novo Empréstimo
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'biblioteca:admin_dashboard' %}" class="btn btn-info w-100">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Painel Admin
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'biblioteca:usuario_list' %}" class="btn btn-secondary w-100">
+                            <i class="fas fa-users me-2"></i>
+                            Gerenciar Usuários
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção de Navegação Rápida -->
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-book me-2"></i>
+                    Gestão de Livros
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'biblioteca:livro_list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-list me-2"></i>Listar Todos os Livros</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    <a href="{% url 'biblioteca:autor_list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-user-edit me-2"></i>Gerenciar Autores</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    <a href="{% url 'biblioteca:categoria_list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-tags me-2"></i>Gerenciar Categorias</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Relatórios e Estatísticas
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'biblioteca:emprestimo_list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-exchange-alt me-2"></i>Histórico de Empréstimos</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    <a href="{% url 'biblioteca:reserva_list' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-bookmark me-2"></i>Gerenciar Reservas</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                    <a href="{% url 'biblioteca:exportar_reservas' %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <span><i class="fas fa-download me-2"></i>Exportar Dados</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mensagem de Boas-vindas -->
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info" role="alert">
+            <h6 class="alert-heading">
+                <i class="fas fa-info-circle me-2"></i>
+                Bem-vindo ao Sistema de Biblioteca SENAC!
+            </h6>
+            <p class="mb-0">
+                Como administrador, você tem acesso completo a todas as funcionalidades do sistema. 
+                Use os cards acima para acessar rapidamente as principais funcionalidades ou navegue pelo menu superior.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

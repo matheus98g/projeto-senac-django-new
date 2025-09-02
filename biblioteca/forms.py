@@ -176,3 +176,35 @@ class BuscarLivroForm(forms.Form):
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+
+
+class ProfileForm(forms.ModelForm):
+    """Formulário para editar o perfil do usuário"""
+    
+    class Meta:
+        model = Usuario
+        fields = ['first_name', 'last_name', 'email', 'tipo_usuario']
+        widgets = {
+            'first_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Nome'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Sobrenome'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'E-mail'
+            }),
+            'tipo_usuario': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # O tipo de usuário só pode ser editado por administradores
+        if not kwargs.get('instance') or not kwargs['instance'].is_admin():
+            self.fields['tipo_usuario'].widget = forms.HiddenInput()
+            self.fields['tipo_usuario'].required = False

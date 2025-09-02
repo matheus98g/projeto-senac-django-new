@@ -9,7 +9,7 @@ from django.db.models import Q
 from django.urls import reverse_lazy
 from django.core.exceptions import ValidationError
 from django.utils import timezone
-from .forms import LoginForm, RegisterForm, LivroForm, AutorForm, CategoriaForm, EmprestimoForm, ReservaForm
+from .forms import LoginForm, RegisterForm, LivroForm, AutorForm, CategoriaForm, EmprestimoForm, ReservaForm, ProfileForm
 from .models import Livro, Autor, Categoria, Emprestimo, Reserva, Usuario
 import datetime
 from django.db import models
@@ -62,6 +62,32 @@ class RegisterView(TemplateView):
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'biblioteca/profile.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['form'] = ProfileForm(instance=self.request.user)
+        context['user'] = self.request.user
+        
+        # Estatísticas do usuário
+        context['total_reservas'] = self.request.user.get_total_reservations()
+        context['reservas_ativas'] = self.request.user.get_active_reservations()
+        context['total_emprestimos'] = self.request.user.get_total_loans()
+        context['emprestimos_ativos'] = self.request.user.get_active_loans()
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        form = ProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Perfil atualizado com sucesso!')
+            return redirect('biblioteca:profile')
+        else:
+            messages.error(request, 'Erro ao atualizar perfil. Verifique os dados.')
+        
+        context = self.get_context_data()
+        context['form'] = form
+        return render(request, self.template_name, context)
 
 # Livro views
 class LivroListView(ListView):
@@ -248,6 +274,22 @@ class ReservarLivroView(LoginRequiredMixin, CreateView):
     def post(self, request, *args, **kwargs):
         livro = get_object_or_404(Livro, pk=self.kwargs['livro_id'])
         
+        # Verificar se o livro está disponível
+        if livro.quantidade_disponivel <= 0:
+            messages.error(request, 'Este livro não está disponível para reserva.')
+            return render(request, self.template_name, {
+                'livro': livro,
+                'form': self.get_form()
+            })
+        
+        # Verificar se o usuário pode fazer mais reservas
+        if not request.user.pode_reservar():
+            messages.error(request, 'Você já possui o limite máximo de reservas ativas (3).')
+            return render(request, self.template_name, {
+                'livro': livro,
+                'form': self.get_form()
+            })
+        
         # Create the reservation instance manually
         reserva = Reserva(
             usuario=request.user,
@@ -259,6 +301,10 @@ class ReservarLivroView(LoginRequiredMixin, CreateView):
             # Validate the instance
             reserva.clean()
             reserva.save()
+            
+            # Recalcular quantidade disponível do livro
+            livro.recalcular_quantidade_disponivel()
+            
             messages.success(request, 'Reserva realizada com sucesso!')
             return redirect('biblioteca:minhas_reservas')
         except ValidationError as e:
@@ -296,9 +342,7 @@ class CancelarReservaView(LoginRequiredMixin, UpdateView):
             
             # Atualizar quantidade disponível do livro
             livro = reserva.livro
-            if livro.quantidade_disponivel < livro.quantidade:
-                livro.quantidade_disponivel += 1
-                livro.save()
+            livro.recalcular_quantidade_disponivel()
             
             # Log da ação
             messages.success(request, f'Reserva do livro "{reserva.livro.titulo}" cancelada com sucesso!')
@@ -451,13 +495,17 @@ class EmprestimoCreateView(AdminRequiredMixin, CreateView):
     
     def form_valid(self, form):
         try:
-            # Diminuir quantidade disponível do livro
+            # Verificar se o livro está disponível
             livro = form.instance.livro
             if livro.quantidade_disponivel > 0:
-                livro.quantidade_disponivel -= 1
-                livro.save()
+                # Salvar o empréstimo primeiro
+                emprestimo = form.save()
+                
+                # Recalcular quantidade disponível do livro
+                livro.recalcular_quantidade_disponivel()
+                
                 messages.success(self.request, f'Empréstimo criado com sucesso! O livro "{livro.titulo}" foi emprestado para {form.instance.usuario.get_full_name() or form.instance.usuario.username}.')
-                return super().form_valid(form)
+                return redirect('biblioteca:emprestimo_list')
             else:
                 form.add_error('livro', 'Este livro não está disponível para empréstimo.')
                 messages.error(self.request, 'Livro não disponível para empréstimo.')

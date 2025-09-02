@@ -145,6 +145,32 @@ class Livro(models.Model):
     def is_available(self):
         return self.quantidade_disponivel > 0
     
+    def recalcular_quantidade_disponivel(self):
+        """
+        Recalcula a quantidade disponível baseada nos empréstimos e reservas ativas
+        """
+        from .models import Emprestimo, Reserva
+        
+        emprestimos_ativos = Emprestimo.objects.filter(
+            livro=self,
+            status='ativo'
+        ).count()
+        
+        reservas_ativas = Reserva.objects.filter(
+            livro=self,
+            status='ativa'
+        ).count()
+        
+        # Calcular quantidade disponível
+        self.quantidade_disponivel = self.quantidade - emprestimos_ativos - reservas_ativas
+        
+        # Garantir que não seja negativa
+        if self.quantidade_disponivel < 0:
+            self.quantidade_disponivel = 0
+        
+        self.save(update_fields=['quantidade_disponivel'])
+        return self.quantidade_disponivel
+    
     def get_author_display(self):
         return  ", ".join([autor.nome for autor in self.autor.all()]) if self.autor else "Nenhum Autor"
     
@@ -349,9 +375,8 @@ class Emprestimo(models.Model):
             self.data_devolucao = timezone.now()
             self.status = 'devolvido'
             
-            # Aumentar quantidade disponível do livro
-            self.livro.quantidade_disponivel += 1
-            self.livro.save()
+            # Recalcular quantidade disponível do livro
+            self.livro.recalcular_quantidade_disponivel()
             
             # Salvar o empréstimo
             self.save()

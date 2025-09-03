@@ -26,7 +26,7 @@ class RegisterForm(UserCreationForm):
         required=True,
         widget=forms.EmailInput(attrs={
             'class': 'form-control',
-            'placeholder': 'E-mail'
+            'placeholder': 'Digite seu e-mail'
         })
     )
     first_name = forms.CharField(
@@ -34,7 +34,7 @@ class RegisterForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Nome'
+            'placeholder': 'Digite seu nome'
         })
     )
     last_name = forms.CharField(
@@ -42,7 +42,7 @@ class RegisterForm(UserCreationForm):
         required=True,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Sobrenome'
+            'placeholder': 'Digite seu sobrenome'
         })
     )
 
@@ -54,16 +54,32 @@ class RegisterForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         self.fields['username'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Nome de usuário'
+            'placeholder': 'Escolha um nome de usuário'
         })
         self.fields['password1'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Senha'
+            'placeholder': 'Digite sua senha'
         })
         self.fields['password2'].widget.attrs.update({
             'class': 'form-control',
-            'placeholder': 'Confirme a senha'
+            'placeholder': 'Confirme sua senha'
         })
+        
+        # Adicionar classes de validação
+        for field in self.fields.values():
+            field.widget.attrs['class'] = field.widget.attrs.get('class', '') + ' form-control'
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError('Este e-mail já está em uso.')
+        return email
+    
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError('Este nome de usuário já está em uso.')
+        return username
 
 
 class LivroForm(forms.ModelForm):

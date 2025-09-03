@@ -51,14 +51,30 @@ class RegisterView(TemplateView):
         context['form'] = RegisterForm()
         return context
     
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Conta criada com sucesso!')
-            return redirect('biblioteca:home')
-        return render(request, self.template_name, {'form': form})
+            try:
+                user = form.save(commit=False)
+                # Definir tipo de usuário padrão como aluno
+                user.tipo_usuario = 'aluno'
+                user.save()
+                
+                # Fazer login automático após registro
+                login(request, user)
+                messages.success(request, 'Conta criada com sucesso! Bem-vindo à Biblioteca SENAC!')
+                return redirect('biblioteca:dashboard')
+            except Exception as e:
+                messages.error(request, f'Erro ao criar conta: {str(e)}')
+        else:
+            # Exibir erros de validação
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{form.fields[field].label}: {error}')
+        
+        context = self.get_context_data()
+        context['form'] = form
+        return render(request, self.template_name, context)
 
 class ProfileView(LoginRequiredMixin, TemplateView):
     template_name = 'biblioteca/profile.html'
